@@ -30,7 +30,6 @@ void BotInitSettings()
 	Settings[FOV_RADIUS] = BotAddConfig("Aimbot Settings", "Aimbot_Fov_Radius", 180.0f, 0.0f, 360.0f);
 	Settings[VISIBLE_CHECK] = BotAddConfig("Aimbot Settings", "Aimbot_VisibleCheck", false);
 	Settings[IGNORE_SURRENDERED] = BotAddConfig("Aimbot Settings", "Aimbot_IgnoreSurrendered", false);
-	Settings[BULLET_TP] = BotAddConfig("Aimbot Settings", "Aimbot_BulletTeleport", false);
 
 	//========================================================================
 
@@ -58,15 +57,14 @@ void BotInitSettings()
 
 	Settings[INFINITE_AMMO] = BotAddConfig("Misc Settings", "Misc_InfiniteAmmo", false);
 	Settings[NO_RECOIL] = BotAddConfig("Misc Settings", "Misc_NoRecoil", false);
-	Settings[NO_CLIP] = BotAddConfig("Misc Settings", "Misc_NoClip", false);
 	Settings[BREAK_DOOR] = BotAddConfig("Misc Settings", "Misc_BreakDoor", false);
 	Settings[DISARM_TRAP] = BotAddConfig("Misc Settings", "Misc_DisarmTrap", false);
-	Settings[FLY] = BotAddConfig("Misc Settings", "Misc_Fly", false);
-	Settings[FLY_MULTIPLIER] = BotAddConfig("Misc Settings", "Misc_FlyMultiplier", 1, 1, 10);
+	Settings[FREE_CAM] = BotAddConfig("Misc Settings", "Misc_FreeCam", false);
 	Settings[FOV_CHANGER] = BotAddConfig("Misc Settings", "Misc_FovChanger", false);
-	Settings[FOV_AMOUNT] = BotAddConfig("Misc Settings", "Misc_FovAmount", 90, 75, 150);
+	Settings[FOV_AMOUNT] = BotAddConfig("Misc Settings", "Misc_FovAmount", 20.0f, 20.0f, 200.0f);
 	Settings[SPEED] = BotAddConfig("Misc Settings", "Misc_Speed", false);
 	Settings[SPEED_MULTIPLIER] = BotAddConfig("Misc Settings", "Misc_SpeedMultiplier", 1, 1, 10);
+	Settings[AUTO_REPORT] = BotAddConfig("Misc Settings", "Misc_AutoReport", false);
 
 	//========================================================================
 

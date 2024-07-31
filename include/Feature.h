@@ -6,6 +6,8 @@ public:
 	explicit Game();
 	~Game() noexcept;
 
+	void Initilize();
+
 	static void Setup();
 	static void Visual();
 	static void Misc();
@@ -20,4 +22,13 @@ private:
 	static inline APlayerController* LocalPlayerController = nullptr;
 	static inline APlayerCharacter* LocalCharacter = nullptr;
 	static inline APlayerCameraManager* LocalPlayerCamera = nullptr;
-} extern g_Game;
+	static inline UKismetSystemLibrary* UKSystemLib = nullptr;
+	static inline UKismetMathLibrary* UKMathLib = nullptr;
+
+private:
+	typedef void(*tGetViewPoint)(ULocalPlayer*, FMinimalViewInfo*);
+	tGetViewPoint GetViewPoint = nullptr;
+
+	static void GetViewPointHook(ULocalPlayer* LocalPlayer, FMinimalViewInfo* OutViewInfo);
+};
+inline std::unique_ptr<Game> g_Game;

@@ -1,7 +1,5 @@
 #include "pch.h"
 
-Console g_Console;
-
 Console::Console() {}
 
 Console::Console(const char* Title) { Initialize(Title); }

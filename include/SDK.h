@@ -10,6 +10,7 @@ bool InitSDK(const std::wstring& ModuleName, uintptr_t gObjectsOffset, uintptr_t
 bool InitSDK();
 
 class AActor;
+class ABaseItem;
 class APlayerState;
 class APlayerController;
 class AReadyOrNotCharacter;
@@ -152,6 +153,30 @@ public:
 	FName MyBoneName;                                              //  ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic
 };
 
+struct FMinimalViewInfo
+{
+public:
+	struct FVector                                Location;                                          // 0x0000(0x0018)(Edit, BlueprintVisible, ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+	struct FRotator                               Rotation;                                          // 0x0018(0x0018)(Edit, BlueprintVisible, ZeroConstructor, IsPlainOldData, NoDestructor, NativeAccessSpecifierPublic)
+	float                                         FOV;                                               // 0x0030(0x0004)(Edit, BlueprintVisible, ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+	float                                         DesiredFOV;                                        // 0x0034(0x0004)(ZeroConstructor, Transient, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+	float                                         OrthoWidth;                                        // 0x0038(0x0004)(Edit, BlueprintVisible, ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+	float                                         OrthoNearClipPlane;                                // 0x003C(0x0004)(Edit, BlueprintVisible, ZeroConstructor, IsPlainOldData, Interp, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+	float                                         OrthoFarClipPlane;                                 // 0x0040(0x0004)(Edit, BlueprintVisible, ZeroConstructor, IsPlainOldData, Interp, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+	float                                         PerspectiveNearClipPlane;                          // 0x0044(0x0004)(Edit, BlueprintVisible, ZeroConstructor, IsPlainOldData, Interp, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+	float                                         AspectRatio;                                       // 0x0048(0x0004)(Edit, BlueprintVisible, ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+	uint8_t                                       Pad_4C[0x8];                                       // 0x004C(0x0008)(Fixing Size After Last Property [ Dumper-7 ])
+	uint8_t                                       bConstrainAspectRatio : 1;                         // 0x0054(0x0001)(BitIndex: 0x00, PropSize: 0x0001 (Edit, BlueprintVisible, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic))
+	uint8_t                                       bUseFieldOfViewForLOD : 1;                         // 0x0054(0x0001)(BitIndex: 0x01, PropSize: 0x0001 (Edit, BlueprintVisible, NoDestructor, AdvancedDisplay, HasGetValueTypeHash, NativeAccessSpecifierPublic))
+	uint8_t                                       Pad_55[0x3];                                       // 0x0055(0x0003)(Fixing Size After Last Property [ Dumper-7 ])
+	uint8_t										  Pad_58;                                            // 0x0058(0x0001)(Edit, BlueprintVisible, ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+	uint8_t                                       Pad_59[0x3];                                       // 0x0059(0x0003)(Fixing Size After Last Property [ Dumper-7 ])
+	float                                         PostProcessBlendWeight;                            // 0x005C(0x0004)(BlueprintVisible, ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+	uint8_t										  Pad_60[0x6E0];                                     // 0x0060(0x06E0)(BlueprintVisible, NativeAccessSpecifierPublic)
+	struct FVector2D                              OffCenterProjectionOffset;                         // 0x0740(0x0010)(Edit, BlueprintVisible, ZeroConstructor, DisableEditOnTemplate, Transient, EditConst, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+	uint8_t                                       Pad_750[0x70];                                     // 0x0750(0x0070)(Fixing Struct Size After Last Property [ Dumper-7 ])
+};
+
 class USceneComponent : public UObject
 {
 public:
@@ -235,6 +260,19 @@ public:
 	void SetMovementMode(EMovementMode NewMovementMode, uint8_t NewCustomMode);
 };
 
+class UBleedComponent : public UActorComponent
+{
+public:
+	PAD(0x8);
+	bool bIsBleeding; // 0x00A8
+	PAD(0x17);
+
+public:
+	void DoHeal();
+	void StopBleeding();
+	bool IsBleeding();
+};
+
 class AActor : public UObject
 {
 public:
@@ -314,7 +352,8 @@ public:
 class AReadyOrNotGameState : public AGameStateBase
 {
 public:
-	PAD(0xA0);
+	PAD(0x90);
+	TArray<class ABaseItem*> AllItems; // 0x0380
 	TArray<class AEvidenceActor*> AllEvidenceActors; // 0x390
 	TArray<class AReportableActor*> AllReportableActors; // 0x3A0
 	TArray<class ATrapActorAttachedToDoor*> AllDoorTrapActors; // 0x3B0
@@ -333,7 +372,9 @@ public:
 	FText ItemName; // 0x2D8
 	PAD(0x40);
 	EItemClass ItemClass; // 0x330
-	PAD(0x877);
+	PAD(0x22D);
+	bool bIsEvidence; // 0x055E
+	PAD(0x649);
 };
 
 class ABaseWeapon : public ABaseItem
@@ -346,6 +387,8 @@ public:
 	float ADSSpreadMultiplier; // 0x1030
 	PAD(0xC);
 	FRotator SpreadPattern; // 0x1040
+	PAD(0x8);
+	FRotator PendingSpread; // 0x1060
 	PAD(0x248);
 };
 
@@ -441,17 +484,22 @@ public:
 	bool IsArrested();
 	bool IsSurrendered();
 	bool IsDeadOrUnconscious();
+	bool IsDeadNotUnconscious();
+	bool IsInjured();
 	float GetMaxHealth();
 	float GetCurrentHealth();
 	ABaseMagazineWeapon* GetEquippedWeapon();
 	bool IsOnSameTeam(AReadyOrNotCharacter* B);
 	bool IsLocalPlayer();
+	void Server_ReportTarget(class AActor* Character);
 };
 
 class APlayerCharacter : public AReadyOrNotCharacter
 {
 public:
-	PAD(0x1340);
+	PAD(0x70);
+	UBleedComponent* BleedComponent; // 0x1940
+	PAD(0x12C8);
 
 public:
 	static inline UClass* StaticClass()
@@ -519,9 +567,9 @@ public:
 class UKismetSystemLibrary : public UObject
 {
 public:
-	static bool IsValid(UObject* Object);
-	static FString GetObjectName(UObject* Object);
-	static bool LineTraceSingle(UObject* WorldContextObject, const FVector& Start, const FVector& End, ETraceTypeQuery TraceChannel, EDrawDebugTrace DrawDebugType, FHitResult* OutHit, const FLinearColor& TraceColor, const FLinearColor& TraceHitColor);
+	bool IsValid(UObject* Object);
+	FString GetObjectName(UObject* Object);
+	bool LineTraceSingle(UObject* WorldContextObject, const FVector& Start, const FVector& End, ETraceTypeQuery TraceChannel, EDrawDebugTrace DrawDebugType, FHitResult* OutHit, const FLinearColor& TraceColor, const FLinearColor& TraceHitColor);
 
 public:
 	static inline UClass* StaticClass()
@@ -531,18 +579,13 @@ public:
 			ptr = UObject::FindClass(std::string(skCrypt("Class /Script/Engine.KismetSystemLibrary")));
 		return ptr;
 	}
-
-	static inline UKismetSystemLibrary* GetDefaultObj()
-	{
-		return GetDefaultObjImpl<UKismetSystemLibrary>();
-	}
 };
 
 class UKismetMathLibrary : public UObject
 {
 public:
-	static float Vector_Distance(const FVector& v1, const FVector& v2);
-	static FRotator FindLookAtRotation(const FVector& Start, const FVector& Target);
+	float Vector_Distance(const FVector& v1, const FVector& v2);
+	FRotator FindLookAtRotation(const FVector& Start, const FVector& Target);
 
 public:
 	static inline UClass* StaticClass()
@@ -551,10 +594,5 @@ public:
 		if (!ptr)
 			ptr = UObject::FindClass(std::string(skCrypt("Class /Script/Engine.KismetMathLibrary")));
 		return ptr;
-	}
-
-	static inline UKismetMathLibrary* GetDefaultObj()
-	{
-		return GetDefaultObjImpl<UKismetMathLibrary>();
 	}
 };

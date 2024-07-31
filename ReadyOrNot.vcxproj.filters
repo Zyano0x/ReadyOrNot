@@ -36,7 +36,7 @@
     <ClInclude Include="include\Drawing.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\DX12.h">
+    <ClInclude Include="include\DX11.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\Engine.h">
@@ -86,7 +86,7 @@
     <ClCompile Include="src\Drawing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\DX12.cpp">
+    <ClCompile Include="src\DX11.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Engine.cpp">
@@ -125,7 +125,7 @@
     <ClCompile Include="src\Feature.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="libs\ImGui\imgui_impl_dx12.cpp">
+    <ClCompile Include="libs\ImGui\imgui_impl_dx11.cpp">
       <Filter>Resource Files\ImGui</Filter>
     </ClCompile>
   </ItemGroup>

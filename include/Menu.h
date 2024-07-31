@@ -3,12 +3,12 @@
 class Menu
 {
 public:
-	bool m_IsShowMenu{ false };
+	static inline bool m_IsShowMenu{ false };
 
 public:
-	void Draw();
-	void MainMenu();
+	static void Draw();
+	static void MainMenu();
 
 	Menu() = default;
 	~Menu() = default;
-} extern g_Menu;
+};

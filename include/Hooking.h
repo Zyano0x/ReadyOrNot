@@ -16,4 +16,5 @@ public:
 public:
 	explicit Hooking();
 	~Hooking() noexcept;
-} extern g_Hooking;
+};
+inline std::unique_ptr<Hooking> g_Hooking;

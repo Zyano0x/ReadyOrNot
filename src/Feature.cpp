@@ -1,22 +1,66 @@
 #include "pch.h"
 
-Game g_Game;
-
 Game::Game()
 {
 	InitSDK();
+
+	UKSystemLib = reinterpret_cast<UKismetSystemLibrary*>(UKismetSystemLibrary::StaticClass());
+	UKMathLib = reinterpret_cast<UKismetMathLibrary*>(UKismetMathLibrary::StaticClass());
 }
 
 Game::~Game() {}
 
+void Game::GetViewPointHook(ULocalPlayer* LocalPlayer, FMinimalViewInfo* OutViewInfo)
+{
+	g_Game->GetViewPoint(LocalPlayer, OutViewInfo);
+
+	static bool GetCameraLocation = true;
+	static FVector NewLocation = FVector();
+
+	if (Settings[FREE_CAM].Value.bValue)
+	{
+		if (GetCameraLocation)
+		{
+			// Set our new location to the original spot once
+			NewLocation = OutViewInfo->Location;
+			GetCameraLocation = false;
+		}
+
+		if (GetAsyncKeyState('W') & 1) NewLocation.X -= 75.f;
+		else if (GetAsyncKeyState('S') & 1) NewLocation.X += 75.f;
+		else if (GetAsyncKeyState('A') & 1) NewLocation.Y -= 75.f;
+		else if (GetAsyncKeyState('D') & 1) NewLocation.Y += 75.f;
+		else if (GetAsyncKeyState(VK_SPACE) & 1) NewLocation.Z += 75.f;
+		else if (GetAsyncKeyState(VK_SHIFT) & 1) NewLocation.Z -= 75.f;
+
+		// Modify OutViewInfo
+		OutViewInfo->Location = NewLocation;
+	}
+
+	if (Settings[FOV_CHANGER].Value.bValue)
+	{
+		OutViewInfo->FOV = Settings[FOV_AMOUNT].Value.fValue;
+	}
+}
+
+void Game::Initilize()
+{
+	uint64_t GetViewPointAddr = Signature(std::string(skCrypt("48 8B C4 48 89 58 ? 48 89 68 ? 56 57 41 57 48 81 EC ? ? ? ? 0F 29 70"))).GetPointer();
+
+	if (GetViewPointAddr)
+	{
+		Hooking::CreateHook(reinterpret_cast<LPVOID>(GetViewPointAddr), &GetViewPointHook, reinterpret_cast<LPVOID*>(&GetViewPoint));
+	}
+}
+
 void Game::Setup()
 {
 	UWorld* GWorld = UWorld::GetWorld();
-	if (!UKismetSystemLibrary::IsValid(GWorld))
+	if (!UKSystemLib->IsValid(GWorld))
 		return;
 
 	UGameInstance* OwningGameInstance = GWorld->OwningGameInstance;
-	if (!UKismetSystemLibrary::IsValid(OwningGameInstance))
+	if (!UKSystemLib->IsValid(OwningGameInstance))
 		return;
 
 	ULocalPlayer* LocalPlayer = OwningGameInstance->LocalPlayers[0];
@@ -24,15 +68,15 @@ void Game::Setup()
 		return;
 
 	LocalPlayerController = LocalPlayer->PlayerController;
-	if (!UKismetSystemLibrary::IsValid(LocalPlayerController))
+	if (!UKSystemLib->IsValid(LocalPlayerController))
 		return;
 
 	LocalCharacter = static_cast<APlayerCharacter*>(LocalPlayerController->GetPawn());
-	if (!UKismetSystemLibrary::IsValid(LocalCharacter))
+	if (!UKSystemLib->IsValid(LocalCharacter))
 		return;
 
 	LocalPlayerCamera = LocalPlayerController->PlayerCameraManager;
-	if (!UKismetSystemLibrary::IsValid(LocalPlayerCamera))
+	if (!UKSystemLib->IsValid(LocalPlayerCamera))
 		return;
 
 	LocalPlayerController->GetViewportSize(&m_ScreenWidth, &m_ScreenHeight);
@@ -44,14 +88,14 @@ void Game::Visual()
 		return;
 
 	UWorld* GWorld = UWorld::GetWorld();
-	if (!UKismetSystemLibrary::IsValid(GWorld))
+	if (!UKSystemLib->IsValid(GWorld))
 		return;
 
-	if (!UKismetSystemLibrary::IsValid(LocalCharacter))
+	if (!UKSystemLib->IsValid(LocalCharacter))
 		return;
 
 	AReadyOrNotPlayerState* LocalPlayerState = static_cast<AReadyOrNotPlayerState*>(LocalCharacter->PlayerState);
-	if (!UKismetSystemLibrary::IsValid(LocalPlayerState))
+	if (!UKSystemLib->IsValid(LocalPlayerState))
 		return;
 
 	if (!LocalPlayerState->bIsInGame)
@@ -61,11 +105,11 @@ void Game::Visual()
 	for (int i = 0; i < Players.Count(); i++)
 	{
 		AReadyOrNotCharacter* Player = Players[i];
-		if (!UKismetSystemLibrary::IsValid(Player))
+		if (!UKSystemLib->IsValid(Player))
 			continue;
 
 		USkeletalMeshComponent* MeshComponent = Player->Mesh;
-		if (!UKismetSystemLibrary::IsValid(MeshComponent))
+		if (!UKSystemLib->IsValid(MeshComponent))
 			continue;
 
 		if (Player->IsLocalPlayer())
@@ -86,9 +130,7 @@ void Game::Visual()
 
 		if (ShowEnemy)
 		{
-			FHitResult HitResult;
-			memset(&HitResult, 0, sizeof(FHitResult));
-			if (UKismetSystemLibrary::LineTraceSingle(GWorld, LocalPlayerCamera->GetCameraLocation(), Location, ETraceTypeQuery::TraceTypeQuery1, EDrawDebugTrace::None, &HitResult, FLinearColor(255.0f, 255.0f, 255.0f, 255.0f), FLinearColor(255.0f, 255.0f, 255.0f, 255.0f)))
+			if (LocalPlayerController->LineOfSightTo(Player, { 0.0f, 0.0f, 0.0f }, false))
 				VEC4CPY(Settings[ESP_VISIBLE_COLOR].Value.v4Value, m_Color);
 			else
 				VEC4CPY(Settings[ESP_ENEMY_COLOR].Value.v4Value, m_Color);
@@ -175,7 +217,7 @@ void Game::Visual()
 						Draw::DrawLine(BoneScreen.X, BoneScreen.Y, PrevBoneScreen.X, PrevBoneScreen.Y, 1.6f, m_Color);
 				}
 
-				float HeadCircleRadius = g_Game.CalculateHeadCircleRadius(Distance);
+				float HeadCircleRadius = g_Game->CalculateHeadCircleRadius(Distance);
 				FVector Head = MeshComponent->GetSocketLocation(MeshComponent->GetBoneName(MeshComponent->GetBoneIndex(FName("head_equipment"))));
 				LocalPlayerController->ProjectWorldLocationToScreen(Head, &HeadScreen, false);
 
@@ -198,7 +240,7 @@ void Game::Visual()
 			{
 				std::string WeaponName = std::string(skCrypt("----"));
 				ABaseMagazineWeapon* EquippedWeapon = Player->GetEquippedWeapon();
-				if (UKismetSystemLibrary::IsValid(EquippedWeapon))
+				if (UKSystemLib->IsValid(EquippedWeapon))
 				{
 					WeaponName = EquippedWeapon->ItemName.ToString();
 				}
@@ -210,7 +252,7 @@ void Game::Visual()
 			{
 				std::string WeaponName = std::string(skCrypt("----"));
 				ABaseMagazineWeapon* EquippedWeapon = Player->GetEquippedWeapon();
-				if (UKismetSystemLibrary::IsValid(EquippedWeapon))
+				if (UKSystemLib->IsValid(EquippedWeapon))
 				{
 					WeaponName = EquippedWeapon->ItemName.ToString();
 				}
@@ -258,29 +300,37 @@ void Game::Visual()
 		}
 	}
 
-	TArray<AEvidenceActor*> Evidences = static_cast<AReadyOrNotGameState*>(GWorld->GameState)->AllEvidenceActors;
-	for (int i = 0; i < Evidences.Count(); i++)
+	TArray<ABaseItem*> Items = static_cast<AReadyOrNotGameState*>(GWorld->GameState)->AllItems;
+	for (int i = 0; i < Items.Count(); i++)
 	{
 		if (!Settings[ESP_EVIDENCE].Value.bValue)
 			break;
 
-		AEvidenceActor* Evidence = Evidences[i];
-		if (!UKismetSystemLibrary::IsValid(Evidence))
+		ABaseItem* Item = Items[i];
+		if (!UKSystemLib->IsValid(Item))
 			continue;
 
-		FVector Location = Evidence->GetActorLocation();
-		if (!Location.IsValid())
-			continue;
+		FVector Location, Extend;
+		Item->GetActorBounds(true, &Location, &Extend, false);
 
-		FVector2D Position;
-		LocalPlayerController->ProjectWorldLocationToScreen(Location, &Position, false);
+		FVector2D HeadPos, FootPos;
+		LocalPlayerController->ProjectWorldLocationToScreen({ Location.X, Location.Y, Location.Z - Extend.Z }, &FootPos, false);
+		LocalPlayerController->ProjectWorldLocationToScreen({ Location.X, Location.Y, Location.Z + Extend.Z }, &HeadPos, false);
 
-		if (Position.IsValid())
+		if (HeadPos.IsValid() && FootPos.IsValid())
 		{
-			const float Distance = Evidence->GetDistanceTo(LocalCharacter) / 100.0f;
+			const float Distance = Item->GetDistanceTo(LocalCharacter) / 100.0f;
+			const float Height = abs(HeadPos.Y - FootPos.Y) / 0.6f;
+			const float Width = Height * 0.4f;
 
-			Draw::DrawString(ImGui::GetIO().FontDefault, std::string(skCrypt("[Evidence] ")).append(std::to_string((int)Distance)).append(std::string(skCrypt("M"))),
-				Position.X, Position.Y, 15.0f, true, Settings[ESP_EVIDENCE_COLOR].Value.v4Value);
+			FVector2D Top = { HeadPos.X - Width * 0.5f, HeadPos.Y };
+			FVector2D Bottom = { HeadPos.X + Width * 0.5f, FootPos.Y };
+
+			if (Item->bIsEvidence)
+			{
+				Draw::DrawString(ImGui::GetIO().FontDefault, std::string(skCrypt("Evidence ")).append(std::to_string((int)Distance)).append(std::string(skCrypt("M"))),
+					(Top.X + Bottom.X) / 2, Top.Y, 15.0f, true, Settings[ESP_EVIDENCE_COLOR].Value.v4Value);
+			}
 		}
 	}
 
@@ -291,7 +341,7 @@ void Game::Visual()
 			break;
 
 		ATrapActorAttachedToDoor* Trap = Traps[i];
-		if (!UKismetSystemLibrary::IsValid(Trap))
+		if (!UKSystemLib->IsValid(Trap))
 			continue;
 
 		FVector Location = Trap->GetActorLocation();
@@ -305,7 +355,7 @@ void Game::Visual()
 		{
 			const float Distance = Trap->GetDistanceTo(LocalCharacter) / 100.0f;
 			std::string TrapName = Trap->TrapName.IsValid() ? Trap->TrapName.ToString() : "";
-			std::string TrapType = g_Game.GetTrapType(Trap->TrapType);
+			std::string TrapType = g_Game->GetTrapType(Trap->TrapType);
 
 			Draw::DrawString(ImGui::GetIO().FontDefault, TrapType.append(TrapName).append(skCrypt(" ")).append(std::to_string((int)Distance)).append(std::string(skCrypt("M"))),
 				Position.X, Position.Y, 15.0f, true, Settings[ESP_TRAP_COLOR].Value.v4Value);
@@ -316,14 +366,14 @@ void Game::Visual()
 void Game::Misc()
 {
 	UWorld* GWorld = UWorld::GetWorld();
-	if (!UKismetSystemLibrary::IsValid(GWorld))
+	if (!UKSystemLib->IsValid(GWorld))
 		return;
 
-	if (!UKismetSystemLibrary::IsValid(LocalCharacter))
+	if (!UKSystemLib->IsValid(LocalCharacter))
 		return;
 
 	AReadyOrNotPlayerState* LocalPlayerState = static_cast<AReadyOrNotPlayerState*>(LocalCharacter->PlayerState);
-	if (!UKismetSystemLibrary::IsValid(LocalPlayerState))
+	if (!UKSystemLib->IsValid(LocalPlayerState))
 		return;
 
 	if (!LocalPlayerState->bIsInGame)
@@ -332,20 +382,22 @@ void Game::Misc()
 	if (Settings[INFINITE_AMMO].Value.bValue)
 	{
 		ABaseMagazineWeapon* EquippedWeapon = LocalCharacter->GetEquippedWeapon();
-		if (UKismetSystemLibrary::IsValid(EquippedWeapon))
+		if (UKSystemLib->IsValid(EquippedWeapon))
 		{
-			EquippedWeapon->bInfiniteAmmo = ~EquippedWeapon->bInfiniteAmmo;
+			if (!EquippedWeapon->bInfiniteAmmo)
+				EquippedWeapon->bInfiniteAmmo = true;
 		}
 	}
 
 	if (Settings[NO_RECOIL].Value.bValue)
 	{
 		ABaseMagazineWeapon* EquippedWeapon = LocalCharacter->GetEquippedWeapon();
-		if (UKismetSystemLibrary::IsValid(EquippedWeapon))
+		if (UKSystemLib->IsValid(EquippedWeapon))
 		{
 			EquippedWeapon->ADSRecoilMultiplier = 0.0f;
 			EquippedWeapon->ADSSpreadMultiplier = 0.0f;
 			EquippedWeapon->SpreadPattern = FRotator();
+			EquippedWeapon->PendingSpread = FRotator();
 			EquippedWeapon->RecoilPattern = TArray<FRotator>();
 		}
 	}
@@ -355,10 +407,8 @@ void Game::Misc()
 		TArray<ADoor*> Doors = static_cast<AReadyOrNotGameState*>(GWorld->GameState)->AllDoors;
 		for (int i = 0; i < Doors.Count(); i++)
 		{
-			if (UKismetSystemLibrary::IsValid(Doors[i]))
-			{
+			if (UKSystemLib->IsValid(Doors[i]))
 				Doors[i]->BreakDoor(true, LocalCharacter);
-			}
 		}
 	}
 
@@ -367,40 +417,45 @@ void Game::Misc()
 		TArray<ATrapActorAttachedToDoor*> Traps = static_cast<AReadyOrNotGameState*>(GWorld->GameState)->AllDoorTrapActors;
 		for (int i = 0; i < Traps.Count(); i++)
 		{
-			if (UKismetSystemLibrary::IsValid(Traps[i]))
-			{
+			if (UKSystemLib->IsValid(Traps[i]))
 				Traps[i]->Server_OnTrapDisarmed();
-			}
 		}
 	}
 
 	if (Settings[SPEED].Value.bValue)
 	{
 		UCharacterMovementComponent* MovementComponent = LocalCharacter->CharacterMovement;
-		if (UKismetSystemLibrary::IsValid(MovementComponent))
+		if (UKSystemLib->IsValid(MovementComponent))
 		{
-			MovementComponent->MaxWalkSpeed = Settings[SPEED_MULTIPLIER].Value.iValue;
-			MovementComponent->MaxWalkSpeedCrouched = Settings[SPEED_MULTIPLIER].Value.iValue;
-			MovementComponent->MaxSwimSpeed = Settings[SPEED_MULTIPLIER].Value.iValue;
-			MovementComponent->MaxAcceleration = Settings[SPEED_MULTIPLIER].Value.iValue;
+			MovementComponent->MaxWalkSpeed *= Settings[SPEED_MULTIPLIER].Value.iValue;
+			MovementComponent->MaxWalkSpeedCrouched *= Settings[SPEED_MULTIPLIER].Value.iValue;
+			MovementComponent->MaxSwimSpeed *= Settings[SPEED_MULTIPLIER].Value.iValue;
+			MovementComponent->MaxAcceleration *= Settings[SPEED_MULTIPLIER].Value.iValue;
 		}
 	}
 
-	Settings[NO_CLIP].Value.bValue ? LocalCharacter->SetActorEnableCollision(false) : LocalCharacter->SetActorEnableCollision(true);
+	TArray<AReadyOrNotCharacter*> Players = static_cast<AReadyOrNotGameState*>(GWorld->GameState)->AllReadyOrNotCharacters;
+	for (int32_t i = 0; i < Players.Count(); ++i)
 	{
-		UCharacterMovementComponent* MovementComponent = LocalCharacter->CharacterMovement;
-		if (UKismetSystemLibrary::IsValid(MovementComponent))
-		{
-			std::function<void(bool)> FlyCallback = [MovementComponent](bool bEnableFly)
-				{
-					MovementComponent->SetMovementMode(bEnableFly ? EMovementMode::MOVE_Flying : EMovementMode::MOVE_Walking, 0);
-					MovementComponent->MaxFlySpeed = bEnableFly ? MovementComponent->MaxFlySpeed *= Settings[FLY_MULTIPLIER].Value.iValue : MovementComponent->MaxFlySpeed /= Settings[FLY_MULTIPLIER].Value.iValue;
-				};
+		AReadyOrNotCharacter* Player = Players[i];
+		if (!UKSystemLib->IsValid(Player) || Player->IsLocalPlayer())
+			continue;
 
-			FlyCallback(Settings[FLY].Value.bValue);
+		if (Player->IsSuspect())
+		{
+			if (Player->IsDeadNotUnconscious() && Settings[AUTO_REPORT].Value.bValue)
+			{
+				LocalCharacter->Server_ReportTarget(Player);
+			}
+		}
+
+		if (Player->IsCivilian())
+		{
+			if (Settings[AUTO_ARREST].Value.bValue)
+			{
+			}
 		}
 	}
-
 }
 
 float Game::CalculateHeadCircleRadius(float Distance)

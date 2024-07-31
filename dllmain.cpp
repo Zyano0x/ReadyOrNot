@@ -7,14 +7,9 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 {
 	if (ul_reason_for_call == DLL_PROCESS_ATTACH)
 	{
-#ifdef _DEBUG
 		DisableThreadLibraryCalls(hModule);
-		HANDLE hThread = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)Main, hModule, 0, 0);
-		if (hThread)
-			CloseHandle(hThread);
-#else
-		spoof_call(Main);
-#endif
+		HANDLE hThread = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)Initialize, hModule, 0, 0);
+		if (hThread) CloseHandle(hThread);
 	}
 	return TRUE;
 }

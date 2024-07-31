@@ -35,7 +35,7 @@ bool UKismetSystemLibrary::IsValid(UObject* Object)
 	params.Object = Object;
 
 	auto flags = fn->FunctionFlags;
-	GetDefaultObj()->ProcessEvent(fn, &params);
+	UObject::ProcessEvent(fn, &params);
 	fn->FunctionFlags = flags;
 
 	return params.ReturnValue;
@@ -58,7 +58,7 @@ FString UKismetSystemLibrary::GetObjectName(UObject* Object)
 	params.Object = Object;
 
 	auto flags = fn->FunctionFlags;
-	GetDefaultObj()->ProcessEvent(fn, &params);
+	UObject::ProcessEvent(fn, &params);
 	fn->FunctionFlags = flags;
 
 	return params.ReturnValue;
@@ -105,7 +105,7 @@ bool UKismetSystemLibrary::LineTraceSingle(UObject* WorldContextObject, const FV
 	params.DrawTime = 0.0f;
 
 	auto flags = fn->FunctionFlags;
-	GetDefaultObj()->ProcessEvent(fn, &params);
+	UObject::ProcessEvent(fn, &params);
 	fn->FunctionFlags = flags;
 
 	if (OutHit != nullptr)
@@ -133,7 +133,7 @@ float UKismetMathLibrary::Vector_Distance(const FVector& v1, const FVector& v2)
 	params.v2 = v2;
 
 	auto flags = fn->FunctionFlags;
-	GetDefaultObj()->ProcessEvent(fn, &params);
+	UObject::ProcessEvent(fn, &params);
 	fn->FunctionFlags = flags;
 
 	return params.ReturnValue;
@@ -158,7 +158,7 @@ FRotator UKismetMathLibrary::FindLookAtRotation(const FVector& Start, const FVec
 	params.Target = Target;
 
 	auto flags = fn->FunctionFlags;
-	GetDefaultObj()->ProcessEvent(fn, &params);
+	UObject::ProcessEvent(fn, &params);
 	fn->FunctionFlags = flags;
 
 	return params.ReturnValue;
@@ -327,6 +327,48 @@ bool AReadyOrNotCharacter::IsDeadOrUnconscious()
 	return params.ReturnValue;
 }
 
+bool AReadyOrNotCharacter::IsDeadNotUnconscious()
+{
+	static UFunction* fn = nullptr;
+	if (!fn)
+		fn = UObject::FindObject<UFunction>(std::string(skCrypt("Function /Script/ReadyOrNot.ReadyOrNotCharacter.IsDeadNotUnconscious")));
+
+	class AReadyOrNotCharacter_IsDeadNotUnconscious_Params
+	{
+	public:
+		bool                                                         ReturnValue;                                             //  0x0000(0x0001)  (Parm, OutParm, ZeroConstructor, ReturnParm, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+	};
+
+	AReadyOrNotCharacter_IsDeadNotUnconscious_Params params{};
+
+	auto flags = fn->FunctionFlags;
+	UObject::ProcessEvent(fn, &params);
+	fn->FunctionFlags = flags;
+
+	return params.ReturnValue;
+}
+
+bool AReadyOrNotCharacter::IsInjured()
+{
+	static UFunction* fn = nullptr;
+	if (!fn)
+		fn = UObject::FindObject<UFunction>(std::string(skCrypt("Function /Script/ReadyOrNot.ReadyOrNotCharacter.IsInjured")));
+
+	class AReadyOrNotCharacter_IsInjured_Params
+	{
+	public:
+		bool                                                         ReturnValue;                                             //  0x0000(0x0001)  (Parm, OutParm, ZeroConstructor, ReturnParm, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+	};
+
+	AReadyOrNotCharacter_IsInjured_Params params{};
+
+	auto flags = fn->FunctionFlags;
+	UObject::ProcessEvent(fn, &params);
+	fn->FunctionFlags = flags;
+
+	return params.ReturnValue;
+}
+
 float AReadyOrNotCharacter::GetMaxHealth()
 {
 	static UFunction* fn = nullptr;
@@ -434,6 +476,26 @@ bool AReadyOrNotCharacter::IsLocalPlayer()
 	fn->FunctionFlags = flags;
 
 	return params.ReturnValue;
+}
+
+void AReadyOrNotCharacter::Server_ReportTarget(AActor* Character)
+{
+	static UFunction* fn = nullptr;
+	if (!fn)
+		fn = UObject::FindObject<UFunction>(std::string(skCrypt("Function /Script/ReadyOrNot.ReadyOrNotCharacter.Server_ReportTarget")));
+
+	class AReadyOrNotCharacter_Server_ReportTarget_Params
+	{
+	public:
+		AActor* Character;                                               //  0x0000(0x0008)  (Parm, ZeroConstructor, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+	};
+
+	AReadyOrNotCharacter_Server_ReportTarget_Params params{};
+	params.Character = Character;
+
+	auto flags = fn->FunctionFlags;
+	UObject::ProcessEvent(fn, &params);
+	fn->FunctionFlags = flags;
 }
 
 bool APlayerController::IsInputKeyDown(const FKey& Key)
@@ -876,6 +938,57 @@ void AActor::SetActorEnableCollision(bool bNewActorEnableCollision)
 	auto flags = fn->FunctionFlags;
 	UObject::ProcessEvent(fn, &params);
 	fn->FunctionFlags = flags;
+}
+
+void UBleedComponent::DoHeal()
+{
+	static UFunction* fn = nullptr;
+	if (!fn)
+		fn = UObject::FindObject<UFunction>(std::string(skCrypt("Function /Script/ReadyOrNot.BleedComponent.DoHeal")));
+
+	class UBleedComponent_DoHeal_Params {};
+
+	UBleedComponent_DoHeal_Params params{};
+
+	auto flags = fn->FunctionFlags;
+	UObject::ProcessEvent(fn, &params);
+	fn->FunctionFlags = flags;
+}
+
+void UBleedComponent::StopBleeding()
+{
+	static UFunction* fn = nullptr;
+	if (!fn)
+		fn = UObject::FindObject<UFunction>(std::string(skCrypt("Function /Script/ReadyOrNot.BleedComponent.StopBleeding")));
+
+	class UBleedComponent_StopBleeding_Params {};
+
+	UBleedComponent_StopBleeding_Params params{};
+
+	auto flags = fn->FunctionFlags;
+	UObject::ProcessEvent(fn, &params);
+	fn->FunctionFlags = flags;
+}
+
+bool UBleedComponent::IsBleeding()
+{
+	static UFunction* fn = nullptr;
+	if (!fn)
+		fn = UObject::FindObject<UFunction>(std::string(skCrypt("Function /Script/ReadyOrNot.BleedComponent.IsBleeding")));
+
+	class UBleedComponent_IsBleeding_Params
+	{
+	public:
+		bool                                                         ReturnValue;                                             //  0x0000(0x0001)  (Parm, OutParm, ZeroConstructor, ReturnParm, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+	};
+
+	UBleedComponent_IsBleeding_Params params{};
+
+	auto flags = fn->FunctionFlags;
+	UObject::ProcessEvent(fn, &params);
+	fn->FunctionFlags = flags;
+
+	return params.ReturnValue;
 }
 
 void UCharacterMovementComponent::SetMovementMode(EMovementMode NewMovementMode, uint8_t NewCustomMode)

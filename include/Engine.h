@@ -13,6 +13,7 @@ class Engine
 public:
 	bool GetKeyPress(int VKey, bool Immediate);
 
-	Engine() = default;
-	~Engine() = default;
-} extern g_Engine;
+	Engine();
+	~Engine();
+};
+inline std::unique_ptr<Engine> g_Engine;

@@ -163,7 +163,7 @@
     <ClInclude Include="include\Console.h" />
     <ClInclude Include="include\CVars.h" />
     <ClInclude Include="include\Drawing.h" />
-    <ClInclude Include="include\DX12.h" />
+    <ClInclude Include="include\DX11.h" />
     <ClInclude Include="include\Engine.h" />
     <ClInclude Include="include\Feature.h" />
     <ClInclude Include="include\Hooking.h" />
@@ -186,7 +186,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="libs\ImGui\imgui_impl_dx12.cpp" />
+    <ClCompile Include="libs\ImGui\imgui_impl_dx11.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="libs\ImGui\imgui_impl_win32.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
@@ -208,7 +210,7 @@
     <ClCompile Include="src\Console.cpp" />
     <ClCompile Include="src\CVars.cpp" />
     <ClCompile Include="src\Drawing.cpp" />
-    <ClCompile Include="src\DX12.cpp" />
+    <ClCompile Include="src\DX11.cpp" />
     <ClCompile Include="src\Engine.cpp" />
     <ClCompile Include="src\Feature.cpp" />
     <ClCompile Include="src\Hooking.cpp" />

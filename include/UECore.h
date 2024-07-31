@@ -19,16 +19,10 @@
 class UObject;
 
 template<typename Fn>
-Fn GetVFunction(const void* instance, const size_t& index)
+Fn GetVFunction(const void* Instance, const size_t& Index)
 {
-	auto vtable = *static_cast<const void***>(const_cast<void*>(instance));
-	return reinterpret_cast<Fn>(const_cast<void(*)>(vtable[index]));
-}
-
-template<class ClassType>
-ClassType* GetDefaultObjImpl()
-{
-	return static_cast<ClassType*>(ClassType::StaticClass()->DefaultObject);
+	auto VTable = *static_cast<const void***>(const_cast<void*>(Instance));
+	return reinterpret_cast<Fn>(const_cast<void(*)>(VTable[Index]));
 }
 
 //=============================================================================================================================================
@@ -565,11 +559,6 @@ public:
 		if (!ptr)
 			ptr = UObject::FindClass("Class /Script/CoreUObject.Class");
 		return ptr;
-	}
-
-	static inline UClass* GetDefaultObj()
-	{
-		return GetDefaultObjImpl<UClass>();
 	}
 };
 

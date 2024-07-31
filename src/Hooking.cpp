@@ -1,7 +1,5 @@
 #include "pch.h"
 
-Hooking g_Hooking;
-
 Hooking::Hooking()
 {
 	MH_Initialize();

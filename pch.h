@@ -17,16 +17,15 @@
 #include <iomanip>
 #include <functional>
 
-#include <dxgi.h>
-#include <d3d12.h>
-#pragma comment(lib, "d3d12.lib")
+#include <d3d11.h>
+#pragma comment(lib, "d3d11.lib")
 
 #include "MinHook/MinHook.h"
 #pragma comment(lib, "MinHook.lib")
 
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_internal.h"
-#include "ImGui/imgui_impl_dx12.h"
+#include "ImGui/imgui_impl_dx11.h"
 #include "ImGui/imgui_impl_win32.h"
 
 #include "Font/Fonts.h"
@@ -44,6 +43,6 @@
 #include "Menu.h"
 #include "Drawing.h"
 #include "Feature.h"
-#include "DX12.h"
+#include "DX11.h"
 
 #endif //PCH_H

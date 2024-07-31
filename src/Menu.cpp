@@ -96,7 +96,8 @@ void Menu::MainMenu()
 					ImGui::Checkbox("Distance", &Settings[ESP_DISTANCE].Value.bValue);
 					ImGui::Checkbox("Health Bar", &Settings[ESP_HEALTH].Value.bValue);
 					ImGui::Checkbox("Weapon", &Settings[ESP_WEAPON].Value.bValue);
-					ImGui::Checkbox("Evidence", &Settings[ESP_EVIDENCE].Value.bValue);
+					ImGui::Checkbox("Evidence", &Settings[ESP_EVIDENCE].Value.bValue); ImGui::ColorEdit4("Evidence Color", (float*)&Settings[ESP_EVIDENCE_COLOR].Value.v4Value, ImGuiColorEditFlags_NoBorder | ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | ImGuiColorEditFlags_NoDragDrop);
+					ImGui::Checkbox("Trap", &Settings[ESP_TRAP].Value.bValue); ImGui::ColorEdit4("Trap Color", (float*)&Settings[ESP_TRAP_COLOR].Value.v4Value, ImGuiColorEditFlags_NoBorder | ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | ImGuiColorEditFlags_NoDragDrop);
 					ImGui::Combo("Box", &Settings[ESP_BOX].Value.iValue, "Off\0" "2D Filled\0" "Corner Filled\0");
 				}
 				if (!Settings[ESP_ENABLED].Value.bValue)
@@ -120,20 +121,14 @@ void Menu::MainMenu()
 				ImGui::Checkbox("Infinite Ammo", &Settings[INFINITE_AMMO].Value.bValue);
 				ImGui::Checkbox("Break All Doors", &Settings[BREAK_DOOR].Value.bValue);
 				ImGui::Checkbox("Disarm All Traps", &Settings[DISARM_TRAP].Value.bValue);
-				ImGui::Checkbox("No Clip", &Settings[NO_CLIP].Value.bValue);
-
-				ImGui::Checkbox("Fly", &Settings[FLY].Value.bValue);
-				ImGui::SliderInt("Fly Multiplier", &Settings[FLY_MULTIPLIER].Value.iValue, Settings[FLY_MULTIPLIER].Value.iMin, Settings[FLY_MULTIPLIER].Value.iMax);
-
-				ImGui::Spacing();
-
 				ImGui::Checkbox("Speed", &Settings[SPEED].Value.bValue);
-				ImGui::SliderInt("Speed Multiplier", &Settings[SPEED_MULTIPLIER].Value.iValue, Settings[SPEED_MULTIPLIER].Value.iMin, Settings[SPEED_MULTIPLIER].Value.iMax);
-
-				ImGui::Spacing();
-
 				ImGui::Checkbox("FOV Changer", &Settings[FOV_CHANGER].Value.bValue);
-				ImGui::SliderInt("FOV", &Settings[FOV_AMOUNT].Value.iValue, Settings[FOV_AMOUNT].Value.iMin, Settings[FOV_AMOUNT].Value.iMax);
+				ImGui::Checkbox("Free Cam", &Settings[FREE_CAM].Value.bValue);
+				ImGui::Checkbox("Auto Arrest", &Settings[AUTO_ARREST].Value.bValue);
+				ImGui::Checkbox("Auto Report", &Settings[AUTO_REPORT].Value.bValue);
+
+				ImGui::SliderInt("Speed Multiplier", &Settings[SPEED_MULTIPLIER].Value.iValue, Settings[SPEED_MULTIPLIER].Value.iMin, Settings[SPEED_MULTIPLIER].Value.iMax);
+				ImGui::SliderFloat("FOV", &Settings[FOV_AMOUNT].Value.fValue, Settings[FOV_AMOUNT].Value.fMin, Settings[FOV_AMOUNT].Value.fMax);
 			}
 			ImGui::EndChild();
 
