@@ -53,8 +53,8 @@ void Menu::MainMenu()
 				{
 					ImGui::Checkbox("Visible Check", &Settings[VISIBLE_CHECK].Value.bValue);
 					ImGui::Checkbox("Ignore Surrendered", &Settings[IGNORE_SURRENDERED].Value.bValue);
-					ImGui::Combo("Mode", &Settings[AIM_MODE].Value.iValue, "Normal\0" "Silent\0" "Rage\0");
-					ImGui::Combo("Hitbox", &Settings[AIM_BONE].Value.iValue, "Head\0" "Neck\0" "Body\0" "Randomize\0");
+					ImGui::Combo("Mode", &Settings[AIM_MODE].Value.iValue, "Normal\0" "Silent\0");
+					ImGui::Combo("Hitbox", &Settings[AIM_BONE].Value.iValue, "Head\0" "Body\0");
 					ImGui::SliderFloat("Smooth", &Settings[AIM_SMOOTH].Value.fValue, Settings[AIM_SMOOTH].Value.fMin, Settings[AIM_SMOOTH].Value.fMax, "%.1f", ImGuiSliderFlags_NoInput);
 
 					ImGui::Spacing();
@@ -126,6 +126,7 @@ void Menu::MainMenu()
 				ImGui::Checkbox("Free Cam", &Settings[FREE_CAM].Value.bValue);
 				ImGui::Checkbox("Auto Arrest", &Settings[AUTO_ARREST].Value.bValue);
 				ImGui::Checkbox("Auto Report", &Settings[AUTO_REPORT].Value.bValue);
+				ImGui::Checkbox("Auto Secure Evidence", &Settings[AUTO_SECURE_EVIDENCE].Value.bValue);
 
 				ImGui::SliderInt("Speed Multiplier", &Settings[SPEED_MULTIPLIER].Value.iValue, Settings[SPEED_MULTIPLIER].Value.iMin, Settings[SPEED_MULTIPLIER].Value.iMax);
 				ImGui::SliderFloat("FOV", &Settings[FOV_AMOUNT].Value.fValue, Settings[FOV_AMOUNT].Value.fMin, Settings[FOV_AMOUNT].Value.fMax);

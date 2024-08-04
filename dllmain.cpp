@@ -8,7 +8,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 	if (ul_reason_for_call == DLL_PROCESS_ATTACH)
 	{
 		DisableThreadLibraryCalls(hModule);
-		HANDLE hThread = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)Initialize, hModule, 0, 0);
+		HANDLE hThread = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)DX11Window::Initialize, hModule, 0, 0);
 		if (hThread) CloseHandle(hThread);
 	}
 	return TRUE;

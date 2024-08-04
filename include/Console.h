@@ -51,5 +51,4 @@ public:
 private:
 	HANDLE p_Handle{};
 	HWND p_Hwnd{};
-};
-inline std::unique_ptr<Console> g_Console;
+} extern g_Console;

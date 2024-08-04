@@ -809,6 +809,11 @@ double FVector::Magnitude() const
 	return sqrt(MagnitudeSqr());
 }
 
+double FVector::InvSqrt(float F) const
+{
+	return 1.0f / sqrtf(F);
+}
+
 FVector FVector::Unit() const
 {
 	const double fMagnitude = Magnitude();
@@ -820,6 +825,24 @@ FRotator FVector::ToRotator() const
 	static constexpr double PI = 3.14159265359;
 	// Pitch, Yaw, Roll
 	return FRotator(asin(Z / Magnitude()) * 180.0 / PI, atan2(Y, X) * 180.0 / PI, 0.0);
+}
+
+FVector FVector::GetSafeNormal(float Tolerance) const
+{
+	const float SquareSum = X * X + Y * Y + Z * Z;
+
+	if (SquareSum == 1.f)
+	{
+		return *this;
+	}
+	else if (SquareSum < Tolerance)
+	{
+		return FVector();
+	}
+
+	const float Scale = InvSqrt(SquareSum);
+
+	return FVector(X * Scale, Y * Scale, Z * Scale);
 }
 
 double FVector::Distance(const FVector& v) const

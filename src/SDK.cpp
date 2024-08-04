@@ -15,7 +15,7 @@ bool InitSDK(const std::wstring& ModuleName, uintptr_t gObjectsOffset, uintptr_t
 
 bool InitSDK()
 {
-	return InitSDK(std::wstring(skCrypt(L"ReadyOrNot-Win64-Shipping.exe")), OBJECTS_OFFSET, NAMES_OFFSET, WORLD_OFFSET);
+	return InitSDK(std::wstring(MODULE_NAME), OBJECTS_OFFSET, NAMES_OFFSET, WORLD_OFFSET);
 }
 
 bool UKismetSystemLibrary::IsValid(UObject* Object)
@@ -164,6 +164,17 @@ FRotator UKismetMathLibrary::FindLookAtRotation(const FVector& Start, const FVec
 	return params.ReturnValue;
 }
 
+ECollisionChannel UEngineTypes::ConvertToCollisionChannel(ETraceTypeQuery Type)
+{
+	static uintptr_t ConvertToCollisionChannelAddress = 0;
+	if (!ConvertToCollisionChannelAddress)
+	{
+		ConvertToCollisionChannelAddress = Signature("40 53 48 83 EC ? 8B D9 E8 ? ? ? ? 44 8B C3 B2").GetPointer();
+		if (ConvertToCollisionChannelAddress)
+			return reinterpret_cast<ECollisionChannel(__fastcall*)(ETraceTypeQuery)>(ConvertToCollisionChannelAddress)(Type);
+	}
+}
+
 UWorld* UWorld::GetWorld()
 {
 	if (!GWorld)
@@ -178,6 +189,21 @@ int32_t ULevel::GetMaxPacket()
 		return 0;
 
 	return Memory::Read<int32_t>(reinterpret_cast<uintptr_t>(this) + 0xA0);
+}
+
+void APlayerCharacter::EquipZipcuffs()
+{
+	static UFunction* fn = nullptr;
+	if (!fn)
+		fn = UObject::FindObject<UFunction>(std::string(skCrypt("Function /Script/ReadyOrNot.PlayerCharacter.EquipZipcuffs")));
+
+	class APlayerCharacter_EquipZipcuffs_Params {};
+
+	APlayerCharacter_EquipZipcuffs_Params params{};
+
+	auto flags = fn->FunctionFlags;
+	UObject::ProcessEvent(fn, &params);
+	fn->FunctionFlags = flags;
 }
 
 bool AReadyOrNotCharacter::IsSuspect()
@@ -411,6 +437,27 @@ float AReadyOrNotCharacter::GetCurrentHealth()
 	return params.ReturnValue;
 }
 
+ABaseItem* AReadyOrNotCharacter::GetEquippedItem()
+{
+	static UFunction* fn = nullptr;
+	if (!fn)
+		fn = UObject::FindObject<UFunction>(std::string(skCrypt("Function /Script/ReadyOrNot.ReadyOrNotCharacter.GetEquippedItem")));
+
+	class AReadyOrNotCharacter_GetEquippedItem_Params
+	{
+	public:
+		ABaseItem* ReturnValue;                                             //  0x0000(0x0008)  (Parm, OutParm, ZeroConstructor, ReturnParm, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+	};
+
+	AReadyOrNotCharacter_GetEquippedItem_Params params{};
+
+	auto flags = fn->FunctionFlags;
+	UObject::ProcessEvent(fn, &params);
+	fn->FunctionFlags = flags;
+
+	return params.ReturnValue;
+}
+
 ABaseMagazineWeapon* AReadyOrNotCharacter::GetEquippedWeapon()
 {
 	static UFunction* fn = nullptr;
@@ -430,6 +477,28 @@ ABaseMagazineWeapon* AReadyOrNotCharacter::GetEquippedWeapon()
 	fn->FunctionFlags = flags;
 
 	return params.ReturnValue;
+}
+
+void AReadyOrNotCharacter::ArrestComplete(AReadyOrNotCharacter* PlayerMakingArrest, AZipcuffs* Zipcuffs)
+{
+	static UFunction* fn = nullptr;
+	if (!fn)
+		fn = UObject::FindObject<UFunction>(std::string(skCrypt("Function /Script/ReadyOrNot.ReadyOrNotCharacter.ArrestComplete")));
+
+	class AReadyOrNotCharacter_ArrestComplete_Params
+	{
+	public:
+		AReadyOrNotCharacter* PlayerMakingArrest;                                      //  0x0000(0x0008)  (Parm, ZeroConstructor, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+		AZipcuffs* Zipcuffs;                                                //  0x0008(0x0008)  (Parm, ZeroConstructor, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+	};
+
+	AReadyOrNotCharacter_ArrestComplete_Params params{};
+	params.PlayerMakingArrest = PlayerMakingArrest;
+	params.Zipcuffs = Zipcuffs;
+
+	auto flags = fn->FunctionFlags;
+	UObject::ProcessEvent(fn, &params);
+	fn->FunctionFlags = flags;
 }
 
 bool AReadyOrNotCharacter::IsOnSameTeam(AReadyOrNotCharacter* B)
@@ -492,6 +561,46 @@ void AReadyOrNotCharacter::Server_ReportTarget(AActor* Character)
 
 	AReadyOrNotCharacter_Server_ReportTarget_Params params{};
 	params.Character = Character;
+
+	auto flags = fn->FunctionFlags;
+	UObject::ProcessEvent(fn, &params);
+	fn->FunctionFlags = flags;
+}
+
+void AReadyOrNotCharacter::Server_CollectEvidence(ABaseItem* Item)
+{
+	static UFunction* fn = nullptr;
+	if (!fn)
+		fn = UObject::FindObject<UFunction>(std::string(skCrypt("Function /Script/ReadyOrNot.ReadyOrNotCharacter.Server_CollectEvidence")));
+
+	class AReadyOrNotCharacter_Server_CollectEvidence_Params
+	{
+	public:
+		ABaseItem* Item;                                                    //  0x0000(0x0008)  (Parm, ZeroConstructor, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+	};
+
+	AReadyOrNotCharacter_Server_CollectEvidence_Params params{};
+	params.Item = Item;
+
+	auto flags = fn->FunctionFlags;
+	UObject::ProcessEvent(fn, &params);
+	fn->FunctionFlags = flags;
+}
+
+void AReadyOrNotCharacter::Server_CollectEvidenceActor(AEvidenceActor* InEvidenceActor)
+{
+	static UFunction* fn = nullptr;
+	if (!fn)
+		fn = UObject::FindObject<UFunction>(std::string(skCrypt("Function /Script/ReadyOrNot.ReadyOrNotCharacter.Server_CollectEvidenceActor")));
+
+	class AReadyOrNotCharacter_Server_CollectEvidenceActor_Params
+	{
+	public:
+		AEvidenceActor* InEvidenceActor;                                         //  0x0000(0x0008)  (Parm, ZeroConstructor, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+	};
+
+	AReadyOrNotCharacter_Server_CollectEvidenceActor_Params params{};
+	params.InEvidenceActor = InEvidenceActor;
 
 	auto flags = fn->FunctionFlags;
 	UObject::ProcessEvent(fn, &params);
@@ -746,6 +855,86 @@ FRotator APlayerCameraManager::GetCameraRotation()
 	fn->FunctionFlags = flags;
 
 	return params.ReturnValue;
+}
+
+void AZipcuffs::Server_ArrestComplete()
+{
+	static UFunction* fn = nullptr;
+	if (!fn)
+		fn = UObject::FindObject<UFunction>(std::string(skCrypt("Function /Script/ReadyOrNot.Zipcuffs.Server_ArrestComplete")));
+
+	class AZipcuffs_Server_ArrestComplete_Params {};
+
+	AZipcuffs_Server_ArrestComplete_Params params{};
+
+	auto flags = fn->FunctionFlags;
+	UObject::ProcessEvent(fn, &params);
+	fn->FunctionFlags = flags;
+}
+
+void ABaseMagazineWeapon::Server_AddMagazine(const FMagazine& Magazine)
+{
+	static UFunction* fn = nullptr;
+	if (!fn)
+		fn = UObject::FindObject<UFunction>(std::string(skCrypt("Function /Script/ReadyOrNot.BaseMagazineWeapon.Server_AddMagazine")));
+
+	class ABaseMagazineWeapon_Server_AddMagazine_Params
+	{
+	public:
+		FMagazine                                        Magazine;                                                //  0x0000(0x0004)  (Parm, NoDestructor, NativeAccessSpecifierPublic)
+	};
+
+	ABaseMagazineWeapon_Server_AddMagazine_Params params{};
+	params.Magazine = Magazine;
+
+	auto flags = fn->FunctionFlags;
+	UObject::ProcessEvent(fn, &params);
+	fn->FunctionFlags = flags;
+}
+
+FMagazine ABaseMagazineWeapon::GetCurrentMagazine()
+{
+	static UFunction* fn = nullptr;
+	if (!fn)
+		fn = UObject::FindObject<UFunction>(std::string(skCrypt("Function /Script/ReadyOrNot.BaseMagazineWeapon.GetCurrentMagazine")));
+
+	class ABaseMagazineWeapon_GetCurrentMagazine_Params
+	{
+	public:
+		FMagazine                                        ReturnValue;                                             //  0x0000(0x0004)  (Parm, OutParm, ReturnParm, NoDestructor, NativeAccessSpecifierPublic)
+	};
+
+	ABaseMagazineWeapon_GetCurrentMagazine_Params params{};
+
+	auto flags = fn->FunctionFlags;
+	UObject::ProcessEvent(fn, &params);
+	fn->FunctionFlags = flags;
+
+	return params.ReturnValue;
+}
+
+void ABaseMagazineWeapon::Server_OnFire(const FRotator& Direction, const FVector& SpawnLoc, int32_t Seed)
+{
+	static UFunction* fn = nullptr;
+	if (!fn)
+		fn = UObject::FindObject<UFunction>(std::string(skCrypt("Function /Script/ReadyOrNot.BaseMagazineWeapon.Server_OnFire")));
+
+	class ABaseMagazineWeapon_Server_OnFire_Params
+	{
+	public:
+		FRotator                                        Direction;                                               //  0x0000(0x0018)  (Parm, ZeroConstructor, IsPlainOldData, NoDestructor, NativeAccessSpecifierPublic)
+		FVector                                         SpawnLoc;                                                //  0x0018(0x0018)  (Parm, ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+		int32_t                                         Seed;                                                    //  0x0030(0x0004)  (Parm, ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+	};
+
+	ABaseMagazineWeapon_Server_OnFire_Params params{};
+	params.Direction = Direction;
+	params.SpawnLoc = SpawnLoc;
+	params.Seed = Seed;
+
+	auto flags = fn->FunctionFlags;
+	UObject::ProcessEvent(fn, &params);
+	fn->FunctionFlags = flags;
 }
 
 FText AEvidenceActor::GetEvidenceName()

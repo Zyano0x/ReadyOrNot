@@ -12,6 +12,7 @@
 #include <Windows.h>
 #include <string>
 #include <vector>
+#include <map>
 #include <mutex>
 #include <sstream>
 #include <iomanip>
@@ -39,7 +40,6 @@
 #include "Hooking.h"
 #include "Console.h"
 #include "CVars.h"
-#include "Engine.h"
 #include "Menu.h"
 #include "Drawing.h"
 #include "Feature.h"

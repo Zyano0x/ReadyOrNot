@@ -1,6 +1,16 @@
 #pragma once
 
+#define MAX_VIRTUALKEYS 0x100
+
+struct VirtualKey
+{
+	bool bKey, bDown, bUp;
+};
+inline VirtualKey VirtualKeys[MAX_VIRTUALKEYS];
+
 std::uint8_t* FindSignature(LPCSTR module_name, const std::string& byte_array);
+void SwapVTable(void* Obj, void* Func, int Index, void** Ret);
+bool GetKeyPress(int VKey, bool Immediate);
 
 class Memory final
 {
@@ -115,6 +125,44 @@ private:
 	std::string Module;
 };
 
-void SwapVirtualTable(void* obj, uint32_t index, void* func);
+class VMTShadow
+{
+private:
+	// Pointer to Target Object
+	void* m_Ptr_Object;
+	// Pointer to Object Virtual Method Table
+	uintptr_t* m_Ptr_Object_VTable;
+	// Pointer to Object Fake Virtual Method Table
+	uintptr_t* m_Ptr_Object_Fake_VTable;
+	// Size of Object Virtual Method Table
+	int m_Object_VTable_Size;
+	// Map Containing the index hooked and the original function
+	std::map<int, uintptr_t*> m_Object_Hooks;
 
-bool IsKeyDown(int VK_Key);
+	// Gets the number of functions in a vtable
+	int GetVTableSize();
+
+public:
+	// Initialize the class for hooking the VMT using the VMT Shadow Hooking technique
+	VMTShadow(void* Object);
+	~VMTShadow();
+
+	/// <summary>
+	/// Apply The Hook on function of VMT
+	/// </summary>
+	/// <param name="Index">The function index in VMT</param>
+	/// <param name="HookFunction">The address of hook function</param>
+	/// <returns>Returns the original function pointer</returns>
+	uintptr_t* Apply(int Index, uintptr_t* HookFunction);
+
+	/// <summary>
+	/// Remove the hook from the hooked function
+	/// </summary>
+	/// <param name="Index">The function index in VMT</param>
+	void Remove(int Index);
+
+	/// <summary>
+	/// Free VTable
+	/// </summary>
+	void FreeFakeVTable();
+};

@@ -1,5 +1,68 @@
 #include "pch.h"
 
+static void memcpy_(void* _Dst, void const* _Src, size_t _Size)
+{
+	auto csrc = (char*)_Src;
+	auto cdest = (char*)_Dst;
+
+	for (int i = 0; i < _Size; i++)
+	{
+		cdest[i] = csrc[i];
+	}
+}
+
+void SwapVTable(void* Obj, void* Func, int Index, void** Ret)
+{
+	// We get the vtable of viewport client
+	auto VTable = *(uintptr_t**)Obj;
+
+	// Now we loop through the vtable. 
+	int Methods = 0;
+	do {
+		++Methods;
+	} while (*(uintptr_t*)((uintptr_t)VTable + (Methods * sizeof(uintptr_t))));
+
+	// We make our own copy of the vtable
+	auto Fake_VTable = new uint64_t[Methods * sizeof(uintptr_t)];
+	for (auto Count = 0; Count < Methods; ++Count)
+	{
+		Fake_VTable[Count] = *(uintptr_t*)((uintptr_t)VTable + (Count * sizeof(uintptr_t)));
+
+		*Ret = (void*)VTable[Index];
+
+		// Now we switch the function in our own copy and then finally swapping the vtable with ours 
+		Fake_VTable[Index] = (uintptr_t)(Func);
+		*(uint64_t**)Obj = Fake_VTable;
+	}
+}
+
+bool GetKeyPress(int VKey, bool Immediate)
+{
+	if (VirtualKeys[VKey].bKey)
+	{
+		VirtualKeys[VKey].bUp = false;
+		VirtualKeys[VKey].bDown = true;
+	}
+
+	else if (!VirtualKeys[VKey].bKey && VirtualKeys[VKey].bDown)
+	{
+		VirtualKeys[VKey].bUp = true;
+		VirtualKeys[VKey].bDown = false;
+	}
+
+	else
+	{
+		VirtualKeys[VKey].bUp = false;
+		VirtualKeys[VKey].bDown = false;
+	}
+
+	if (Immediate)
+		return VirtualKeys[VKey].bDown;
+
+	else
+		return VirtualKeys[VKey].bUp;
+}
+
 Memory::Allocator Memory::mem_allocator_;
 
 Memory::Allocator::~Allocator()
@@ -215,37 +278,92 @@ uint32_t Signature::GetPointer()
 }
 #endif
 
-static inline void memcpy_(void* _Dst, void const* _Src, size_t _Size)
+VMTShadow::VMTShadow(void* Object)
 {
-	auto csrc = (char*)_Src;
-	auto cdest = (char*)_Dst;
+	// Initialize essential class members
+	this->m_Ptr_Object = Object;
+	this->m_Ptr_Object_VTable = *reinterpret_cast<uintptr_t**>(Object);
+	this->m_Object_VTable_Size = this->GetVTableSize();
 
-	for (int i = 0; i < _Size; i++)
-	{
-		cdest[i] = csrc[i];
-	}
+	// Creates the Fake VMT
+	this->m_Ptr_Object_Fake_VTable = new uintptr_t[this->m_Object_VTable_Size];
+
+	// Fill the Fake Virtual Method Table with the Function Pointers from Original
+	memcpy(this->m_Ptr_Object_Fake_VTable, this->m_Ptr_Object_VTable, this->m_Object_VTable_Size * sizeof(uintptr_t));
+
+	// Swap VTable Pointer
+	*reinterpret_cast<uintptr_t**>(this->m_Ptr_Object) = this->m_Ptr_Object_Fake_VTable;
+
+	g_Console.cLog(skCrypt("Object: 0x%llX\n"), Console::ECOLOR_GREEN, this->m_Ptr_Object);
+	g_Console.cLog(skCrypt("VTable Size: %d\n"), Console::ECOLOR_GREEN, this->m_Object_VTable_Size);
+	g_Console.cLog(skCrypt("Original VTable: 0x%llX\n"), Console::ECOLOR_GREEN, this->m_Ptr_Object_VTable);
+	g_Console.cLog(skCrypt("Fake VTable: 0x%llX\n"), Console::ECOLOR_GREEN, this->m_Ptr_Object_Fake_VTable);
 }
 
-void SwapVirtualTable(void* obj, uint32_t index, void* func)
+VMTShadow::~VMTShadow()
 {
-	auto currVt = *(void**)(obj);
+	this->FreeFakeVTable();
+}
 
-	auto vtable = *(void***)(obj);
+int VMTShadow::GetVTableSize()
+{
+	MEMORY_BASIC_INFORMATION mbi{};
 	int i = 0;
 
-	for (; vtable[i]; i++)
-		__noop();
+	// Query memory regions until VirtualQuery fails
+	while (VirtualQuery(reinterpret_cast<LPCVOID>(this->m_Ptr_Object_VTable[i]), &mbi, sizeof(mbi)))
+	{
+#define PAGE_EXECUTABLE ( PAGE_EXECUTE | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY )
 
-	auto newVt = new uintptr_t[i];
+		// Break on invalid pointers
+		if ((mbi.State != MEM_COMMIT) || (mbi.Protect & (PAGE_GUARD | PAGE_NOACCESS)) || !(mbi.Protect & PAGE_EXECUTABLE))
+			break;
 
-	memcpy_(newVt, currVt, i * 0x8);
+		// Increment function count
+		++i;
+	}
 
-	newVt[index] = (uintptr_t)func;
-
-	*(uintptr_t**)(obj) = newVt;
+	return i;
 }
 
-bool IsKeyDown(int VK_Key)
+uintptr_t* VMTShadow::Apply(int Index, uintptr_t* HookFunction)
 {
-	return ((GetAsyncKeyState(VK_Key) & 0x8000) ? 1 : 0);
+	if (Index < 0 || Index >= m_Object_VTable_Size)
+	{
+		// Index out of bounds
+		return nullptr;
+	}
+
+	// Get the Pointer to Original Func
+	uintptr_t* p_Original_Function = *reinterpret_cast<uintptr_t**>(this->m_Ptr_Object_Fake_VTable + Index);
+
+	// Swap pointer to Original Function to Hook Function Pointer
+	*reinterpret_cast<uintptr_t**>(this->m_Ptr_Object_Fake_VTable + Index) = HookFunction;
+
+	// Insert the hook function to the list
+	this->m_Object_Hooks[Index] = p_Original_Function;
+
+	return p_Original_Function;
+}
+
+void VMTShadow::Remove(int Index)
+{
+	// Swap the pointer from hook function to original function using the hook list
+	*reinterpret_cast<uintptr_t**>(this->m_Ptr_Object_Fake_VTable + Index) = this->m_Object_Hooks[Index];
+
+	// Removes the hook function from hook list
+	this->m_Object_Hooks.erase(Index);
+}
+
+void VMTShadow::FreeFakeVTable()
+{
+	if (m_Ptr_Object_Fake_VTable)
+	{
+		// Restore the original VTable pointer to the object
+		*reinterpret_cast<uintptr_t**>(m_Ptr_Object) = m_Ptr_Object_VTable;
+
+		// Delete the fake VTable
+		delete[] m_Ptr_Object_Fake_VTable;
+		m_Ptr_Object_Fake_VTable = nullptr;
+	}
 }

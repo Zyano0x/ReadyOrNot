@@ -24,7 +24,7 @@ void BotInitSettings()
 	Settings[AIM_KEY] = BotAddConfig("Aimbot Settings", "Aimbot_Key", 0, 0, 4); // 5: 0, 1, 2, 3, 4
 	Settings[AIM_MODE] = BotAddConfig("Aimbot Settings", "Aimbot_Mode", 0, 0, 2); // Normal, Silent	
 	Settings[AIM_SMOOTH] = BotAddConfig("Aimbot Settings", "Aimbot_Smooath", 5.0f, 0.0f, 15.0f);
-	Settings[AIM_BONE] = BotAddConfig("Aimbot Settings", "Aimbot_Bone", 0, 0, 3); // Head, Neck, Body, Randomize
+	Settings[AIM_BONE] = BotAddConfig("Aimbot Settings", "Aimbot_Bone", 0, 0, 1); // Head, Body
 	Settings[FOV] = BotAddConfig("Aimbot Settings", "Aimbot_Fov", false);
 	Settings[FOV_COLOR] = BotAddConfig("Aimbot Settings", "Aimbot_Fov_Color", ImVec4(1.00f, 1.00f, 1.00f, 1.00f));
 	Settings[FOV_RADIUS] = BotAddConfig("Aimbot Settings", "Aimbot_Fov_Radius", 180.0f, 0.0f, 360.0f);
@@ -64,7 +64,9 @@ void BotInitSettings()
 	Settings[FOV_AMOUNT] = BotAddConfig("Misc Settings", "Misc_FovAmount", 20.0f, 20.0f, 200.0f);
 	Settings[SPEED] = BotAddConfig("Misc Settings", "Misc_Speed", false);
 	Settings[SPEED_MULTIPLIER] = BotAddConfig("Misc Settings", "Misc_SpeedMultiplier", 1, 1, 10);
+	Settings[AUTO_ARREST] = BotAddConfig("Misc Settings", "Misc_AutoArrest", false);
 	Settings[AUTO_REPORT] = BotAddConfig("Misc Settings", "Misc_AutoReport", false);
+	Settings[AUTO_SECURE_EVIDENCE] = BotAddConfig("Misc Settings", "Misc_AutoSecureEvidence", false);
 
 	//========================================================================
 

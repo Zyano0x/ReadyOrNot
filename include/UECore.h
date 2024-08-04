@@ -6,10 +6,12 @@
 #include <unordered_set>
 
 #define FNAME_POOL
-#define OBJECTS_OFFSET 0x8837CB0
-#define NAMES_OFFSET 0x8791900
-#define WORLD_OFFSET 0x89A4858
+#define MODULE_NAME skCrypt(L"ReadyOrNot-Win64-Shipping.exe")
+#define OBJECTS_OFFSET 0x8837EB0
+#define NAMES_OFFSET 0x8791B00
+#define WORLD_OFFSET 0x89A4A58
 #define PROCESS_EVENT_INDEX 0x4D
+#define PROCESS_EVENT_OFFSET 0xE5FF00
 #define CREATE_DEFAULT_OBJECT_INDEX 0x00
 #define POST_RENDER_INDEX 0x3C || 0x43
 #define GET_BONE_MATRIX_OFFSET 0x00
@@ -643,8 +645,10 @@ public:
 	double Dot(const FVector& b) const;
 	double MagnitudeSqr() const;
 	double Magnitude() const;
+	double InvSqrt(float F) const;
 	FVector Unit() const;
 	FRotator ToRotator() const;
+	FVector GetSafeNormal(float Tolerance = 0.0f) const;
 	double Distance(const FVector& v) const;
 	double DistanceMeter(FVector& v) const;
 

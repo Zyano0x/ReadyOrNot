@@ -9,6 +9,7 @@
 bool InitSDK(const std::wstring& ModuleName, uintptr_t gObjectsOffset, uintptr_t gNamesOffset, uintptr_t gWorldOffset);
 bool InitSDK();
 
+class UWorld;
 class AActor;
 class ABaseItem;
 class APlayerState;
@@ -45,6 +46,44 @@ enum class EMovementMode : uint8_t
 	MOVE_Flying = 5,
 	MOVE_Custom = 6,
 	MOVE_MAX = 7,
+};
+
+enum class ECollisionChannel : uint8_t
+{
+	ECC_WorldStatic = 0,
+	ECC_WorldDynamic = 1,
+	ECC_Pawn = 2,
+	ECC_Visibility = 3,
+	ECC_Camera = 4,
+	ECC_PhysicsBody = 5,
+	ECC_Vehicle = 6,
+	ECC_Destructible = 7,
+	ECC_EngineTraceChannel1 = 8,
+	ECC_EngineTraceChannel2 = 9,
+	ECC_EngineTraceChannel3 = 10,
+	ECC_EngineTraceChannel4 = 11,
+	ECC_EngineTraceChannel5 = 12,
+	ECC_EngineTraceChannel6 = 13,
+	ECC_GameTraceChannel1 = 14,
+	ECC_GameTraceChannel2 = 15,
+	ECC_GameTraceChannel3 = 16,
+	ECC_GameTraceChannel4 = 17,
+	ECC_GameTraceChannel5 = 18,
+	ECC_GameTraceChannel6 = 19,
+	ECC_GameTraceChannel7 = 20,
+	ECC_GameTraceChannel8 = 21,
+	ECC_GameTraceChannel9 = 22,
+	ECC_GameTraceChannel10 = 23,
+	ECC_GameTraceChannel11 = 24,
+	ECC_GameTraceChannel12 = 25,
+	ECC_GameTraceChannel13 = 26,
+	ECC_GameTraceChannel14 = 27,
+	ECC_GameTraceChannel15 = 28,
+	ECC_GameTraceChannel16 = 29,
+	ECC_GameTraceChannel17 = 30,
+	ECC_GameTraceChannel18 = 31,
+	ECC_OverlapAll_Deprecated = 32,
+	ECC_MAX = 33,
 };
 
 enum class ETraceTypeQuery : uint8_t
@@ -119,6 +158,21 @@ enum class EItemClass : uint8_t
 	IC_MAX = 20,
 };
 
+enum ETraceFrameType
+{
+	TraceFrameType_Game,
+	TraceFrameType_Rendering,
+	TraceFrameType_Count
+};
+
+struct FFrame
+{
+	uint64_t Index;
+	double StartTime;
+	double EndTime;
+	ETraceFrameType FrameType;
+};
+
 struct FActorInstanceHandle
 {
 public:
@@ -175,6 +229,21 @@ public:
 	uint8_t										  Pad_60[0x6E0];                                     // 0x0060(0x06E0)(BlueprintVisible, NativeAccessSpecifierPublic)
 	struct FVector2D                              OffCenterProjectionOffset;                         // 0x0740(0x0010)(Edit, BlueprintVisible, ZeroConstructor, DisableEditOnTemplate, Transient, EditConst, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
 	uint8_t                                       Pad_750[0x70];                                     // 0x0750(0x0070)(Fixing Struct Size After Last Property [ Dumper-7 ])
+};
+
+struct FMagazine
+{
+public:
+	uint16_t                                        Ammo;                                              // 0x0000(0x0002)(Edit, ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+	uint16_t                                        AmmoType;                                          // 0x0002(0x0002)(Edit, ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+};
+
+class Server_OnFire_Params
+{
+public:
+	FRotator                                        Direction;                                               //  0x0000(0x0018)  (Parm, ZeroConstructor, IsPlainOldData, NoDestructor, NativeAccessSpecifierPublic)
+	FVector                                         SpawnLoc;                                                //  0x0018(0x0018)  (Parm, ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+	int32_t                                         Seed;                                                    //  0x0030(0x0004)  (Parm, ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
 };
 
 class USceneComponent : public UObject
@@ -312,9 +381,9 @@ class ATrapActor : public AActor
 {
 public:
 	PAD(0x80);
-	FString                                          TrapName;
-	ETrapType                                        TrapType;
-	ETrapState                                       TrapStatus;
+	FString TrapName; // 0x318
+	ETrapType TrapType; // 0x328
+	ETrapState TrapStatus; // 0x329
 	PAD(0x2E);
 
 public:
@@ -389,7 +458,7 @@ public:
 	FRotator SpreadPattern; // 0x1040
 	PAD(0x8);
 	FRotator PendingSpread; // 0x1060
-	PAD(0x248);
+	PAD(0x228);
 };
 
 class ABaseMagazineWeapon : public ABaseWeapon
@@ -398,6 +467,20 @@ public:
 	PAD(0x224);
 	uint8_t bInfiniteAmmo : 1; // 0x14C4
 	PAD(0x25B);
+
+public:
+	void Server_AddMagazine(const FMagazine& Magazine);
+	FMagazine GetCurrentMagazine();
+	void Server_OnFire(const FRotator& Direction, const FVector& SpawnLoc, int32_t Seed);
+};
+
+class AZipcuffs : public ABaseItem
+{
+public:
+	PAD(0x158);
+
+public:
+	void Server_ArrestComplete();
 };
 
 class APawn : public AActor
@@ -488,10 +571,14 @@ public:
 	bool IsInjured();
 	float GetMaxHealth();
 	float GetCurrentHealth();
+	ABaseItem* GetEquippedItem();
 	ABaseMagazineWeapon* GetEquippedWeapon();
+	void ArrestComplete(AReadyOrNotCharacter* PlayerMakingArrest, AZipcuffs* Zipcuffs);
 	bool IsOnSameTeam(AReadyOrNotCharacter* B);
 	bool IsLocalPlayer();
 	void Server_ReportTarget(class AActor* Character);
+	void Server_CollectEvidence(class ABaseItem* Item);
+	void Server_CollectEvidenceActor(AEvidenceActor* InEvidenceActor);
 };
 
 class APlayerCharacter : public AReadyOrNotCharacter
@@ -502,6 +589,9 @@ public:
 	PAD(0x12C8);
 
 public:
+	void EquipZipcuffs();
+
+public:
 	static inline UClass* StaticClass()
 	{
 		static UClass* ptr = nullptr;
@@ -509,6 +599,20 @@ public:
 			ptr = UObject::FindClass(std::string(skCrypt("Class /Script/ReadyOrNot.PlayerCharacter")));
 		return ptr;
 	}
+};
+
+class UScriptViewportClient : public UObject
+{
+public:
+	PAD(0x10);
+};
+
+class UGameViewportClient : public UScriptViewportClient
+{
+public:
+	PAD(0x40);
+	UWorld* World; // 0x0078
+	PAD(0x330);
 };
 
 class UPlayer : public UObject
@@ -522,7 +626,9 @@ public:
 class ULocalPlayer : public UPlayer
 {
 public:
-	PAD(0x268);
+	PAD(0x30);
+	UGameViewportClient* ViewportClient; // 0x0078
+	PAD(0x230);
 };
 
 class UGameInstance : public UObject
@@ -553,7 +659,7 @@ public:
 	PAD(0x8);
 	ULevel* PersistentLevel; // 0x30
 	PAD(0x120);
-	AGameStateBase* GameState; // 0x150
+	AGameStateBase* GameState; // 0x158
 	PAD(0x10);
 	TArray<ULevel*> Levels; // 0x170
 	PAD(0x38);
@@ -562,6 +668,12 @@ public:
 
 public:
 	static UWorld* GetWorld();
+};
+
+class UEngineTypes : public UObject
+{
+public:
+	static ECollisionChannel ConvertToCollisionChannel(ETraceTypeQuery Type);
 };
 
 class UKismetSystemLibrary : public UObject

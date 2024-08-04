@@ -164,7 +164,6 @@
     <ClInclude Include="include\CVars.h" />
     <ClInclude Include="include\Drawing.h" />
     <ClInclude Include="include\DX11.h" />
-    <ClInclude Include="include\Engine.h" />
     <ClInclude Include="include\Feature.h" />
     <ClInclude Include="include\Hooking.h" />
     <ClInclude Include="include\Lazy.h" />
@@ -211,7 +210,6 @@
     <ClCompile Include="src\CVars.cpp" />
     <ClCompile Include="src\Drawing.cpp" />
     <ClCompile Include="src\DX11.cpp" />
-    <ClCompile Include="src\Engine.cpp" />
     <ClCompile Include="src\Feature.cpp" />
     <ClCompile Include="src\Hooking.cpp" />
     <ClCompile Include="src\Memory.cpp" />
