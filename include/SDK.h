@@ -670,12 +670,6 @@ public:
 	static UWorld* GetWorld();
 };
 
-class UEngineTypes : public UObject
-{
-public:
-	static ECollisionChannel ConvertToCollisionChannel(ETraceTypeQuery Type);
-};
-
 class UKismetSystemLibrary : public UObject
 {
 public:

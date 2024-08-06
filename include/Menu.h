@@ -3,12 +3,13 @@
 class Menu
 {
 public:
-	static inline bool m_IsShowMenu{ false };
+	bool m_IsShowMenu{ false };
 
 public:
-	static void Draw();
-	static void MainMenu();
+	void Draw();
+	void MainMenu();
 
 	Menu() = default;
 	~Menu() = default;
 };
+inline std::unique_ptr<Menu> g_Menu;

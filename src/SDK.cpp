@@ -164,17 +164,6 @@ FRotator UKismetMathLibrary::FindLookAtRotation(const FVector& Start, const FVec
 	return params.ReturnValue;
 }
 
-ECollisionChannel UEngineTypes::ConvertToCollisionChannel(ETraceTypeQuery Type)
-{
-	static uintptr_t ConvertToCollisionChannelAddress = 0;
-	if (!ConvertToCollisionChannelAddress)
-	{
-		ConvertToCollisionChannelAddress = Signature("40 53 48 83 EC ? 8B D9 E8 ? ? ? ? 44 8B C3 B2").GetPointer();
-		if (ConvertToCollisionChannelAddress)
-			return reinterpret_cast<ECollisionChannel(__fastcall*)(ETraceTypeQuery)>(ConvertToCollisionChannelAddress)(Type);
-	}
-}
-
 UWorld* UWorld::GetWorld()
 {
 	if (!GWorld)

@@ -1,12 +1,10 @@
 #include "pch.h"
 
-Console g_Console;
-
 Console::Console() {}
 
 Console::Console(const char* Title) { Initialize(Title); }
 
-Console::Console(const char* Title, bool bIsShow) { Initialize(Title, bIsShow); }
+Console::Console(const char* Title, bool bShow) { Initialize(Title, bShow); }
 
 Console::~Console() { DestroyConsole(); }
 
@@ -67,10 +65,10 @@ void Console::DestroyConsole()
 	m_IsInit = false;
 }
 
-void Console::SetConsoleVisibility(bool bShow)
+void Console::ToggleConsole()
 {
-	this->m_IsShow = bShow;
-	ShowWindow(p_Hwnd, bShow ? SW_SHOW : SW_HIDE);
+	this->m_IsShow = !this->m_IsShow;
+	ShowWindow(p_Hwnd, this->m_IsShow ? SW_SHOW : SW_HIDE);
 }
 
 void Console::Log(const char* fmt, ...)

@@ -34,7 +34,7 @@ public:
 	void cLog(const char* fmt, const EColors Color = ECOLOR_DEFAULT, ...);
 	void LogError(const char* fmt, ...);
 	void DestroyConsole();
-	void SetConsoleVisibility(bool bShow);
+	void ToggleConsole();
 	HANDLE GetHandle();
 	HWND GetWindowHandle();
 
@@ -44,11 +44,12 @@ public:
 
 public:
 	explicit Console();
-	Console(const char* title);
-	Console(const char* title, bool bShow);
+	Console(const char* Title);
+	Console(const char* Title, bool bShow);
 	~Console();
 
 private:
 	HANDLE p_Handle{};
 	HWND p_Hwnd{};
-} extern g_Console;
+};
+inline std::unique_ptr<Console> g_Console;

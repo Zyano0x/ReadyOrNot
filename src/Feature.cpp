@@ -1,7 +1,5 @@
 #include "pch.h"
 
-Game g_Game;
-
 Game::Game()
 {
 	InitSDK();
@@ -12,14 +10,9 @@ Game::Game()
 
 Game::~Game() {}
 
-void __fastcall Game::ProcessEventHook(UObject* Class, UFunction* Function, void* Parms)
-{
-	g_Game.ProcessEvent(Class, Function, Parms);
-}
-
 void __fastcall Game::GetViewPointHook(ULocalPlayer* LocalPlayer, FMinimalViewInfo* OutViewInfo)
 {
-	g_Game.GetViewPoint(LocalPlayer, OutViewInfo);
+	PLH::FnCast(g_Game->GetViewPoint, &GetViewPointHook)(LocalPlayer, OutViewInfo);
 
 	if (Settings[FREE_CAM].Value.bValue)
 	{
@@ -54,28 +47,36 @@ void __fastcall Game::ServerOnFireHook(ABaseMagazineWeapon* Weapon, FRotator* Di
 {
 	if (Settings[AIM_MODE].Value.iValue == 1)
 	{
-		if (UKSystemLib->IsValid(BestPlayer) && UKSystemLib->IsValid(LocalPlayerCamera) && Weapon == LocalCharacter->GetEquippedWeapon())
+		if (g_Game->UKSystemLib->IsValid(g_Game->BestPlayer) && g_Game->UKSystemLib->IsValid(g_Game->LocalPlayerCamera) && Weapon == g_Game->LocalCharacter->GetEquippedWeapon())
 		{
-			FVector TargetLocation = g_Game.GetAimWorldLocation(BestPlayer);
-			FRotator NewRotation = UKMathLib->FindLookAtRotation(LocalPlayerCamera->GetCameraLocation(), TargetLocation);
+			FVector TargetLocation = g_Game->GetAimWorldLocation(g_Game->BestPlayer);
+			FRotator NewRotation = g_Game->UKMathLib->FindLookAtRotation(g_Game->LocalPlayerCamera->GetCameraLocation(), TargetLocation);
 			*Direction = NewRotation;
 		}
 	}
 
-	g_Game.ServerOnFire(Weapon, Direction, SpawnLoc, Seed);
+	PLH::FnCast(g_Game->ServerOnFire, &ServerOnFireHook)(Weapon, Direction, SpawnLoc, Seed);
 }
 
 void Game::Initilize()
 {
-	//uintptr_t ProcessEventAddr = Signature(std::string(skCrypt("40 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 48 8D 6C 24 ? 48 89 9D ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C5 48 89 85 ? ? ? ? 4D 8B E0"))).GetPointer();
-	uintptr_t GetViewPointAddr = Signature(std::string(skCrypt("48 8B C4 48 89 58 ? 48 89 68 ? 56 57 41 57 48 81 EC ? ? ? ? 0F 29 70"))).GetPointer();
-	uintptr_t ServerOnFireAddr = Signature(std::string(skCrypt("40 ? 53 57 41 ? 41 ? 41 ? 48 8D ? ? ? ? ? ? 48 81 EC ? ? ? ? 48 8B ? ? ? ? ? 48 33 ? 48 89 ? ? ? ? ? 48 8B ? 45 8B"))).GetPointer();
-	if (GetViewPointAddr)
+	uint64_t GetViewPointAddr = Signature(std::string(skCrypt("48 8B C4 48 89 58 ? 48 89 68 ? 56 57 41 57 48 81 EC ? ? ? ? 0F 29 70"))).GetPointer();
+	uint64_t ServerOnFireAddr = Signature(std::string(skCrypt("40 ? 53 57 41 ? 41 ? 41 ? 48 8D ? ? ? ? ? ? 48 81 EC ? ? ? ? 48 8B ? ? ? ? ? 48 33 ? 48 89 ? ? ? ? ? 48 8B ? 45 8B"))).GetPointer();
+
+	if (GetViewPointAddr && ServerOnFireAddr)
 	{
-		//Hooking::CreateHook(reinterpret_cast<LPVOID>(ProcessEventAddr), &ProcessEventHook, reinterpret_cast<LPVOID*>(&ProcessEvent));
-		Hooking::CreateHook(reinterpret_cast<LPVOID>(GetViewPointAddr), &GetViewPointHook, reinterpret_cast<LPVOID*>(&GetViewPoint));
-		Hooking::CreateHook(reinterpret_cast<LPVOID>(ServerOnFireAddr), &ServerOnFireHook, reinterpret_cast<LPVOID*>(&ServerOnFire));
+		GetViewPointDetour = std::make_unique<PLH::x64Detour>(GetViewPointAddr, (uint64_t)GetViewPointHook, &GetViewPoint);
+		ServerOnFireDetour = std::make_unique<PLH::x64Detour>(ServerOnFireAddr, (uint64_t)ServerOnFireHook, &ServerOnFire);
+
+		GetViewPointDetour->hook();
+		ServerOnFireDetour->hook();
 	}
+}
+
+void Game::UnHook()
+{
+	GetViewPointDetour->unHook();
+	ServerOnFireDetour->unHook();
 }
 
 void Game::Setup()
@@ -242,7 +243,7 @@ void Game::Visual()
 						Draw::DrawLine(BoneScreen.X, BoneScreen.Y, PrevBoneScreen.X, PrevBoneScreen.Y, 1.6f, m_Color);
 				}
 
-				float HeadCircleRadius = g_Game.CalculateHeadCircleRadius(Distance);
+				float HeadCircleRadius = g_Game->CalculateHeadCircleRadius(Distance);
 				FVector Head = MeshComponent->GetSocketLocation(MeshComponent->GetBoneName(MeshComponent->GetBoneIndex(FName("head_equipment"))));
 				LocalPlayerController->ProjectWorldLocationToScreen(Head, &HeadScreen, false);
 
@@ -380,7 +381,7 @@ void Game::Visual()
 		{
 			const float Distance = Trap->GetDistanceTo(LocalCharacter) / 100.0f;
 			std::string TrapName = Trap->TrapName.IsValid() ? Trap->TrapName.ToString() : "";
-			std::string TrapType = g_Game.GetTrapType(Trap->TrapType);
+			std::string TrapType = g_Game->GetTrapType(Trap->TrapType);
 
 			Draw::DrawString(ImGui::GetIO().FontDefault, TrapType.append(TrapName).append(skCrypt(" ")).append(std::to_string((int)Distance)).append(std::string(skCrypt("M"))),
 				Position.X, Position.Y, 15.0f, true, Settings[ESP_TRAP_COLOR].Value.v4Value);
@@ -396,15 +397,15 @@ void Game::Aimbot()
 	if (Settings[FOV].Value.bValue && m_ScreenWidth != 0 && m_ScreenHeight != 0)
 		Draw::DrawCircle(m_ScreenWidth / 2, m_ScreenHeight / 2, Settings[FOV_RADIUS].Value.fValue, Settings[FOV_COLOR].Value.v4Value);
 
-	BestPlayer = g_Game.GetBestPlayer();
+	BestPlayer = g_Game->GetBestPlayer();
 	if (!UKSystemLib->IsValid(BestPlayer))
 		return;
 
-	FVector TargetLocation = g_Game.GetAimWorldLocation(BestPlayer);
+	FVector TargetLocation = g_Game->GetAimWorldLocation(BestPlayer);
 	if (!TargetLocation.IsValid())
 		return;
 
-	FRotator NewRotation = g_Game.CalcAngle(LocalPlayerCamera->GetCameraLocation(), TargetLocation, LocalPlayerCamera->GetCameraRotation(), Settings[AIM_SMOOTH].Value.fValue);
+	FRotator NewRotation = g_Game->CalcAngle(LocalPlayerCamera->GetCameraLocation(), TargetLocation, LocalPlayerCamera->GetCameraRotation(), Settings[AIM_SMOOTH].Value.fValue);
 
 	if (Settings[AIM_MODE].Value.iValue == 0)
 	{

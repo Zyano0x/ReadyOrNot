@@ -294,10 +294,10 @@ VMTShadow::VMTShadow(void* Object)
 	// Swap VTable Pointer
 	*reinterpret_cast<uintptr_t**>(this->m_Ptr_Object) = this->m_Ptr_Object_Fake_VTable;
 
-	g_Console.cLog(skCrypt("Object: 0x%llX\n"), Console::ECOLOR_GREEN, this->m_Ptr_Object);
-	g_Console.cLog(skCrypt("VTable Size: %d\n"), Console::ECOLOR_GREEN, this->m_Object_VTable_Size);
-	g_Console.cLog(skCrypt("Original VTable: 0x%llX\n"), Console::ECOLOR_GREEN, this->m_Ptr_Object_VTable);
-	g_Console.cLog(skCrypt("Fake VTable: 0x%llX\n"), Console::ECOLOR_GREEN, this->m_Ptr_Object_Fake_VTable);
+	g_Console->cLog(skCrypt("Object: 0x%llX\n"), Console::ECOLOR_GREEN, this->m_Ptr_Object);
+	g_Console->cLog(skCrypt("VTable Size: %d\n"), Console::ECOLOR_GREEN, this->m_Object_VTable_Size);
+	g_Console->cLog(skCrypt("Original VTable: 0x%llX\n"), Console::ECOLOR_GREEN, this->m_Ptr_Object_VTable);
+	g_Console->cLog(skCrypt("Fake VTable: 0x%llX\n"), Console::ECOLOR_GREEN, this->m_Ptr_Object_Fake_VTable);
 }
 
 VMTShadow::~VMTShadow()

@@ -1,7 +1,5 @@
 #include "pch.h"
 
-DX11Window g_DX11Window;
-
 DX11Window::DX11Window() {}
 
 DX11Window::~DX11Window() {}
@@ -36,45 +34,155 @@ LRESULT DX11Window::WndProcHook(const HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	}
 
 	if (GetKeyPress(VK_INSERT, false))
-		Menu::m_IsShowMenu = !Menu::m_IsShowMenu;
+		g_Menu->m_IsShowMenu = !g_Menu->m_IsShowMenu;
 
-	if (Menu::m_IsShowMenu)
+	if (GetKeyPress(VK_END, false))
+		g_DX11Window->Unload = !g_DX11Window->Unload;
+
+	if (g_Menu->m_IsShowMenu)
 	{
-		ImGui_ImplWin32_WndProcHandler((HWND)g_DX11Window.WndProc, uMsg, wParam, lParam);
+		ImGui_ImplWin32_WndProcHandler((HWND)g_DX11Window->WndProc, uMsg, wParam, lParam);
 		return true;
 	}
-	return CallWindowProc((WNDPROC)g_DX11Window.WndProc, hWnd, uMsg, wParam, lParam);
+	return CallWindowProc((WNDPROC)g_DX11Window->WndProc, hWnd, uMsg, wParam, lParam);
 }
 
 HRESULT DX11Window::PresentHook(IDXGISwapChain* SwapChain, UINT SyncInterval, UINT Flags)
 {
-	g_DX11Window.Overlay(SwapChain);
-	return g_DX11Window.Present(SwapChain, SyncInterval, Flags);
+	g_DX11Window->Overlay(SwapChain);
+
+	return ((IDXGISwapChainPresent)(g_DX11Window->m_VTOrig.at(8)))(SwapChain, SyncInterval, Flags);
 }
 
 HRESULT DX11Window::ResizeHook(IDXGISwapChain* SwapChain, UINT BufferCount, UINT Width, UINT Height, DXGI_FORMAT NewFormat, UINT SwapChainFlags)
 {
 	SwapChain = SwapChain;
-	g_DX11Window.RenderTargetView->Release();
-	g_DX11Window.RenderTargetView = nullptr;
+	g_DX11Window->RenderTargetView->Release();
+	g_DX11Window->RenderTargetView = nullptr;
 
-	HRESULT Result = g_DX11Window.ResizeBuffers(SwapChain, BufferCount, Width, Height, NewFormat, SwapChainFlags);
+	HRESULT Result = ((IDXGISwapChainResizeBuffers)(g_DX11Window->m_VTOrig.at(13)))(SwapChain, BufferCount, Width, Height, NewFormat, SwapChainFlags);
 
 	ID3D11Texture2D* BackBuffer;
 	SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D*), (LPVOID*)&BackBuffer);
 	if (BackBuffer)
 	{
-		g_DX11Window.Device->CreateRenderTargetView(BackBuffer, 0, &g_DX11Window.RenderTargetView);
+		g_DX11Window->Device->CreateRenderTargetView(BackBuffer, 0, &g_DX11Window->RenderTargetView);
 		BackBuffer->Release();
 	}
 
-	if (g_DX11Window.InitImGui)
+	if (g_DX11Window->InitImGui)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		io.DisplaySize = ImVec2(static_cast<float>(Width), static_cast<float>(Height));
 	}
 
 	return Result;
+}
+
+bool DX11Window::HookD3D()
+{
+	if (!InitWindow())
+		return false;
+
+	HMODULE D3D11Module = GetModuleHandleW(skCrypt(L"d3d11.dll"));
+
+	D3D_FEATURE_LEVEL FeatureLevel;
+	const D3D_FEATURE_LEVEL FeatureLevels[] = { D3D_FEATURE_LEVEL_10_1, D3D_FEATURE_LEVEL_11_0 };
+
+	DXGI_RATIONAL RefreshRate;
+	RefreshRate.Numerator = 60;
+	RefreshRate.Denominator = 1;
+
+	DXGI_MODE_DESC BufferDesc;
+	BufferDesc.Width = 100;
+	BufferDesc.Height = 100;
+	BufferDesc.RefreshRate = RefreshRate;
+	BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+	BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+
+	DXGI_SAMPLE_DESC SampleDesc;
+	SampleDesc.Count = 1;
+	SampleDesc.Quality = 0;
+
+	DXGI_SWAP_CHAIN_DESC SwapChainDesc;
+	SwapChainDesc.BufferDesc = BufferDesc;
+	SwapChainDesc.SampleDesc = SampleDesc;
+	SwapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	SwapChainDesc.BufferCount = 1;
+	SwapChainDesc.OutputWindow = WindowHwnd;
+	SwapChainDesc.Windowed = 1;
+	SwapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+	SwapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+
+	IDXGISwapChain* SwapChain;
+	ID3D11Device* Device;
+	ID3D11DeviceContext* Context;
+	if (D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, FeatureLevels, 1, D3D11_SDK_VERSION, &SwapChainDesc, &SwapChain, &Device, &FeatureLevel, &Context) < 0)
+	{
+		DeleteWindow();
+		return false;
+	}
+
+	//void** VTable = *reinterpret_cast<void***>(SwapChain);
+
+	const PLH::VFuncMap m_Redirect = {
+			{ FUNCTION_INDEX(8), FUNCTION_HOOK(PresentHook) },
+			{ FUNCTION_INDEX(13), FUNCTION_HOOK(ResizeHook) },
+	};
+
+	VFHook = std::make_unique<PLH::VFuncSwapHook>(reinterpret_cast<uint64_t>(SwapChain), m_Redirect, &m_VTOrig);
+	VFHook->hook();
+
+	Sleep(1000);
+
+	SwapChain->Release();
+	SwapChain = 0;
+	Device->Release();
+	Device = 0;
+	Context->Release();
+	Context = 0;
+	DeleteWindow();
+
+	return VFHook->isHooked() ? true : false;
+}
+
+void DX11Window::UnhookD3D()
+{
+	SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR)WndProc);
+	VFHook->unHook();
+}
+
+bool DX11Window::InitWindow()
+{
+	WindowClass.cbSize = sizeof(WNDCLASSEX);
+	WindowClass.style = CS_HREDRAW | CS_VREDRAW;
+	WindowClass.lpfnWndProc = DefWindowProc;
+	WindowClass.cbClsExtra = 0;
+	WindowClass.cbWndExtra = 0;
+	WindowClass.hInstance = GetModuleHandle(NULL);
+	WindowClass.hIcon = NULL;
+	WindowClass.hCursor = NULL;
+	WindowClass.hbrBackground = NULL;
+	WindowClass.lpszMenuName = NULL;
+	WindowClass.lpszClassName = L"MJ";
+	WindowClass.hIconSm = NULL;
+	RegisterClassEx(&WindowClass);
+	WindowHwnd = CreateWindow(WindowClass.lpszClassName, skCrypt(L"DX11 Window"), WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, NULL, NULL, WindowClass.hInstance, NULL);
+	if (WindowHwnd == NULL) {
+		return FALSE;
+	}
+	return TRUE;
+}
+
+bool DX11Window::DeleteWindow()
+{
+	DestroyWindow(WindowHwnd);
+	UnregisterClass(WindowClass.lpszClassName, WindowClass.hInstance);
+	if (WindowHwnd != 0) {
+		return FALSE;
+	}
+	return TRUE;
 }
 
 void DX11Window::Overlay(IDXGISwapChain* SwapChain)
@@ -121,13 +229,13 @@ void DX11Window::Overlay(IDXGISwapChain* SwapChain)
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
-	ImGui::GetIO().MouseDrawCursor = Menu::m_IsShowMenu;
+	ImGui::GetIO().MouseDrawCursor = g_Menu->m_IsShowMenu;
 
-	spoof_call(Game::Setup);
-	spoof_call(Game::Visual);
-	spoof_call(Game::Aimbot);
-	spoof_call(Game::Misc);
-	spoof_call(Menu::Draw);
+	g_Game->Setup();
+	g_Game->Visual();
+	g_Game->Aimbot();
+	g_Game->Misc();
+	g_Menu->Draw();
 
 	ImGui::EndFrame();
 	ImGui::Render();
@@ -137,30 +245,36 @@ void DX11Window::Overlay(IDXGISwapChain* SwapChain)
 
 void DX11Window::Initialize(HMODULE dwModule)
 {
-	UNREFERENCED_PARAMETER(dwModule);
+	g_DX11Window = std::make_unique<DX11Window>();
+	g_Console = std::make_unique<Console>();
+	g_Menu = std::make_unique<Menu>();
+	g_Game = std::make_unique<Game>();
 
-	g_Console.Initialize(skCrypt("Debug Console"), true);
-	g_Game.Initilize();
-	g_Hooking.Initialize();
+	g_Console->Initialize(skCrypt("Debug Console"));
+	g_DX11Window->HookD3D();
+	g_Game->Initilize();
 
-	uint64_t PresentAddr = (uint64_t)(LI_FN(GetModuleHandleW)(skCrypt(L"GameOverlayRenderer64.dll"))) + 0x149BE0;
-	uint64_t ResizeBuffersAddr = (uint64_t)(LI_FN(GetModuleHandleW)(skCrypt(L"GameOverlayRenderer64.dll"))) + 0x149BE8;
+	Sleep(1);
 
-	IDXGISwapChainPresent* _Present = (IDXGISwapChainPresent*)PresentAddr;
-	g_DX11Window.Present = *_Present;
+	while (!g_DX11Window->Unload)
+	{
+		if (GetKeyPress(VK_HOME, false))
+		{
+			g_Console->ToggleConsole();
+		}
+	}
 
-	IDXGISwapChainResizeBuffers* _ResizeBuffers = (IDXGISwapChainResizeBuffers*)ResizeBuffersAddr;
-	g_DX11Window.ResizeBuffers = *_ResizeBuffers;
+	Sleep(100);
 
-	_InterlockedExchangePointer((volatile PVOID*)PresentAddr, PresentHook);
-	_InterlockedExchangePointer((volatile PVOID*)ResizeBuffersAddr, ResizeHook);
+	g_Console->DestroyConsole();
+	g_DX11Window->UnhookD3D();
+	g_Game->UnHook();
 
-	/*uint64_t hkPresent_Sig = Signature(std::string(skCrypt("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC ? 41 8B E8"))).Import(std::string(skCrypt("GameOverlayRenderer64.dll"))).GetPointer();
-	uint64_t hkResizeBuffers_Sig = Signature(std::string(skCrypt("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC ? 44 8B FA"))).Import(std::string(skCrypt("GameOverlayRenderer64.dll"))).GetPointer();
-	uint64_t CreateHook_Sig = Signature(std::string(skCrypt("48 89 5C 24 ? 57 48 83 EC ? 33 C0 48 89 44 24"))).Import(std::string(skCrypt("GameOverlayRenderer64.dll"))).GetPointer();
+	g_DX11Window.release();
+	g_Console.release();
+	g_Menu.release();
+	g_Game.release();
 
-	__int64(__fastcall * CreateHook)(unsigned __int64 pFuncAddress, __int64 pDetourFuncAddress, unsigned __int64* pOriginalFuncAddressOut, int a4);
-	CreateHook = (decltype(CreateHook))CreateHook_Sig;
-	CreateHook(hkPresent_Sig, (__int64)&PresentHook, (unsigned __int64*)&g_DX11Window.Present, 1);
-	CreateHook(hkResizeBuffers_Sig, (__int64)&ResizeHook, (unsigned __int64*)&g_DX11Window.ResizeBuffers, 1);*/
+	Sleep(100);
+	FreeLibraryAndExitThread(dwModule, 0);
 }

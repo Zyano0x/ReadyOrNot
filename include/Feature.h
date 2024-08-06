@@ -7,11 +7,12 @@ public:
 	~Game() noexcept;
 
 	void Initilize();
+	void UnHook();
 
-	static void Setup();
-	static void Visual();
-	static void Aimbot();
-	static void Misc();
+	void Setup();
+	void Visual();
+	void Aimbot();
+	void Misc();
 
 	float CalculateHeadCircleRadius(float Distance);
 	std::string GetTrapType(ETrapType Type);
@@ -22,27 +23,26 @@ public:
 	UGameViewportClient* GetViewport(UWorld* World);
 
 private:
-	static inline int m_ScreenWidth = 0;
-	static inline int m_ScreenHeight = 0;
-	static inline ImVec4 m_Color{};
-	static inline AReadyOrNotCharacter* BestPlayer = nullptr;
-	static inline APlayerController* LocalPlayerController = nullptr;
-	static inline APlayerCharacter* LocalCharacter = nullptr;
-	static inline APlayerCameraManager* LocalPlayerCamera = nullptr;
-	static inline UKismetSystemLibrary* UKSystemLib = nullptr;
-	static inline UKismetMathLibrary* UKMathLib = nullptr;
+	int m_ScreenWidth = 0;
+	int m_ScreenHeight = 0;
+	ImVec4 m_Color{};
+	AReadyOrNotCharacter* BestPlayer = nullptr;
+	APlayerController* LocalPlayerController = nullptr;
+	APlayerCharacter* LocalCharacter = nullptr;
+	APlayerCameraManager* LocalPlayerCamera = nullptr;
+	UKismetSystemLibrary* UKSystemLib = nullptr;
+	UKismetMathLibrary* UKMathLib = nullptr;
 
 private:
 	typedef void(__fastcall* tGetViewPoint)(ULocalPlayer*, FMinimalViewInfo*);
-	tGetViewPoint GetViewPoint = nullptr;
-
-	typedef void(__fastcall* tProcessEvent)(UObject*, UFunction*, void*);
-	tProcessEvent ProcessEvent = nullptr;
+	uint64_t GetViewPoint = 0;
+	std::unique_ptr<PLH::x64Detour> GetViewPointDetour = nullptr;
 
 	typedef void(__fastcall* tServerOnFire)(ABaseMagazineWeapon*, FRotator*, FVector*, int32_t);
-	tServerOnFire ServerOnFire = nullptr;
+	uint64_t ServerOnFire = 0;
+	std::unique_ptr<PLH::x64Detour> ServerOnFireDetour = nullptr;
 
-	static void __fastcall ProcessEventHook(UObject* Class, UFunction* Function, void* Parms);
 	static void __fastcall ServerOnFireHook(ABaseMagazineWeapon* Weapon, FRotator* Direction, FVector* SpawnLoc, int32_t Seed);
 	static void __fastcall GetViewPointHook(ULocalPlayer* LocalPlayer, FMinimalViewInfo* OutViewInfo);
-} extern g_Game;
+};
+inline std::unique_ptr<Game> g_Game;

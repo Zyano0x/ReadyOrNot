@@ -19,8 +19,8 @@
     <Filter Include="Resource Files\Encrypt">
       <UniqueIdentifier>{15a9c495-d8bc-451f-a7c2-449b3693e22a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files\MinHook">
-      <UniqueIdentifier>{b9848684-4ad0-4498-8baa-09d0f9f8d37e}</UniqueIdentifier>
+    <Filter Include="Resource Files\PolyHook">
+      <UniqueIdentifier>{fd4d4d5a-f093-456a-8ae3-651b831b7269}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -39,9 +39,6 @@
     <ClInclude Include="include\DX11.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\Hooking.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\Memory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -52,9 +49,6 @@
       <Filter>Resource Files\Encrypt</Filter>
     </ClInclude>
     <ClInclude Include="include\Lazy.h">
-      <Filter>Resource Files\Encrypt</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Spoofer.h">
       <Filter>Resource Files\Encrypt</Filter>
     </ClInclude>
     <ClInclude Include="include\UECore.h">
@@ -84,9 +78,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\DX11.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Hooking.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Memory.cpp">
@@ -124,13 +115,20 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <MASM Include="include\Spoofer.asm">
-      <Filter>Resource Files\Encrypt</Filter>
-    </MASM>
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="libs\MinHook\MinHook.lib">
-      <Filter>Resource Files\MinHook</Filter>
+    <Library Include="libs\asmjit\asmjit.lib">
+      <Filter>Resource Files\PolyHook</Filter>
+    </Library>
+    <Library Include="libs\asmtk\asmtk.lib">
+      <Filter>Resource Files\PolyHook</Filter>
+    </Library>
+    <Library Include="libs\polyhook2\PolyHook.lib">
+      <Filter>Resource Files\PolyHook</Filter>
+    </Library>
+    <Library Include="libs\Zycore\Zycore.lib">
+      <Filter>Resource Files\PolyHook</Filter>
+    </Library>
+    <Library Include="libs\Zydis\Zydis.lib">
+      <Filter>Resource Files\PolyHook</Filter>
     </Library>
   </ItemGroup>
 </Project>

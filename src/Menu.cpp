@@ -1,12 +1,10 @@
 #include "pch.h"
 
-Menu g_Menu;
-
 void Menu::Draw()
 {
-	if (g_Menu.m_IsShowMenu)
+	if (m_IsShowMenu)
 	{
-		g_Menu.MainMenu();
+		MainMenu();
 	}
 }
 
