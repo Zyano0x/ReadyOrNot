@@ -12,26 +12,12 @@ Game::Game()
 
 Game::~Game() {}
 
-void Game::ProcessEventHook(UObject* Class, UFunction* Function, void* Parms)
+void __fastcall Game::ProcessEventHook(UObject* Class, UFunction* Function, void* Parms)
 {
 	g_Game.ProcessEvent(Class, Function, Parms);
 }
 
-void Game::ServerOnFireHook(ABaseMagazineWeapon* Weapon, FRotator* Direction, FVector* SpawnLoc, int32_t Seed)
-{
-	if (Settings[AIM_MODE].Value.iValue == 1)
-	{
-		if (UKSystemLib->IsValid(BestPlayer) && Weapon == LocalCharacter->GetEquippedWeapon())
-		{
-			FVector Out = g_Game.GetAimWorldLocation(BestPlayer);
-			*SpawnLoc = Out;
-		}
-	}
-
-	g_Game.ServerOnFire(Weapon, Direction, SpawnLoc, Seed);
-}
-
-void Game::GetViewPointHook(ULocalPlayer* LocalPlayer, FMinimalViewInfo* OutViewInfo)
+void __fastcall Game::GetViewPointHook(ULocalPlayer* LocalPlayer, FMinimalViewInfo* OutViewInfo)
 {
 	g_Game.GetViewPoint(LocalPlayer, OutViewInfo);
 
@@ -64,16 +50,31 @@ void Game::GetViewPointHook(ULocalPlayer* LocalPlayer, FMinimalViewInfo* OutView
 	}
 }
 
+void __fastcall Game::ServerOnFireHook(ABaseMagazineWeapon* Weapon, FRotator* Direction, FVector* SpawnLoc, int32_t Seed)
+{
+	if (Settings[AIM_MODE].Value.iValue == 1)
+	{
+		if (UKSystemLib->IsValid(BestPlayer) && UKSystemLib->IsValid(LocalPlayerCamera) && Weapon == LocalCharacter->GetEquippedWeapon())
+		{
+			FVector TargetLocation = g_Game.GetAimWorldLocation(BestPlayer);
+			FRotator NewRotation = UKMathLib->FindLookAtRotation(LocalPlayerCamera->GetCameraLocation(), TargetLocation);
+			*Direction = NewRotation;
+		}
+	}
+
+	g_Game.ServerOnFire(Weapon, Direction, SpawnLoc, Seed);
+}
+
 void Game::Initilize()
 {
 	//uintptr_t ProcessEventAddr = Signature(std::string(skCrypt("40 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 48 8D 6C 24 ? 48 89 9D ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C5 48 89 85 ? ? ? ? 4D 8B E0"))).GetPointer();
 	uintptr_t GetViewPointAddr = Signature(std::string(skCrypt("48 8B C4 48 89 58 ? 48 89 68 ? 56 57 41 57 48 81 EC ? ? ? ? 0F 29 70"))).GetPointer();
 	uintptr_t ServerOnFireAddr = Signature(std::string(skCrypt("40 ? 53 57 41 ? 41 ? 41 ? 48 8D ? ? ? ? ? ? 48 81 EC ? ? ? ? 48 8B ? ? ? ? ? 48 33 ? 48 89 ? ? ? ? ? 48 8B ? 45 8B"))).GetPointer();
-	if (GetViewPointAddr && ServerOnFireAddr)
+	if (GetViewPointAddr)
 	{
+		//Hooking::CreateHook(reinterpret_cast<LPVOID>(ProcessEventAddr), &ProcessEventHook, reinterpret_cast<LPVOID*>(&ProcessEvent));
 		Hooking::CreateHook(reinterpret_cast<LPVOID>(GetViewPointAddr), &GetViewPointHook, reinterpret_cast<LPVOID*>(&GetViewPoint));
 		Hooking::CreateHook(reinterpret_cast<LPVOID>(ServerOnFireAddr), &ServerOnFireHook, reinterpret_cast<LPVOID*>(&ServerOnFire));
-		//Hooking::CreateHook(reinterpret_cast<LPVOID>(ProcessEventAddr), &ProcessEventHook, reinterpret_cast<LPVOID*>(&ProcessEvent));
 	}
 }
 

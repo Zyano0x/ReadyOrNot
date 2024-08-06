@@ -913,6 +913,28 @@ FMagazine ABaseMagazineWeapon::GetCurrentMagazine()
 	return params.ReturnValue;
 }
 
+void ABaseMagazineWeapon::OnFire(const FRotator& Direction, const FVector& SpawnLoc)
+{
+	static UFunction* fn = nullptr;
+	if (!fn)
+		fn = UObject::FindObject<UFunction>(std::string(skCrypt("Function /Script/ReadyOrNot.BaseMagazineWeapon.OnFire")));
+
+	class ABaseMagazineWeapon_OnFire_Params
+	{
+	public:
+		FRotator                                        Direction;                                               //  0x0000(0x0018)  (Parm, ZeroConstructor, IsPlainOldData, NoDestructor, NativeAccessSpecifierPublic)
+		FVector                                         SpawnLoc;                                                //  0x0018(0x0018)  (Parm, ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+	};
+
+	ABaseMagazineWeapon_OnFire_Params params{};
+	params.Direction = Direction;
+	params.SpawnLoc = SpawnLoc;
+
+	auto flags = fn->FunctionFlags;
+	UObject::ProcessEvent(fn, &params);
+	fn->FunctionFlags = flags;
+}
+
 void ABaseMagazineWeapon::Server_OnFire(const FRotator& Direction, const FVector& SpawnLoc, int32_t Seed)
 {
 	static UFunction* fn = nullptr;

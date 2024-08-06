@@ -584,6 +584,47 @@ public:
 
 //==============================================================================================================================================
 
+class FFieldVariant
+{
+public:
+	using ContainerType = union { class FField* Field; class UObject* Object; };             // 0x0000(0x0008)(NOT AUTO-GENERATED PROPERTY)
+
+	static constexpr uint64_t UObjectMask = 0x1;                                 // 0x0000(0x0001)(NOT AUTO-GENERATED PROPERTY)
+
+	ContainerType Container;                                         // 0x0000(0x0008)(NOT AUTO-GENERATED PROPERTY)
+};
+
+class FField
+{
+public:
+	void* VTable;                                            // 0x0000(0x0008)(NOT AUTO-GENERATED PROPERTY)
+	class FFieldClass* ClassPrivate;                         // 0x0008(0x0008)(NOT AUTO-GENERATED PROPERTY)
+	FFieldVariant Owner;                                     // 0x0010(0x0008)(NOT AUTO-GENERATED PROPERTY)
+	class FField* Next;                                      // 0x0018(0x0008)(NOT AUTO-GENERATED PROPERTY)
+	FName Name;                                              // 0x0020(0x0008)(NOT AUTO-GENERATED PROPERTY)
+	int32_t ObjFlags;                                        // 0x0028(0x0004)(NOT AUTO-GENERATED PROPERTY)
+};
+
+class FProperty : public FField
+{
+public:
+	int32_t                                         ArrayDim;                                          // 0x0030(0x0004)(NOT AUTO-GENERATED PROPERTY)
+	int32_t                                         ElementSize;                                       // 0x0034(0x0004)(NOT AUTO-GENERATED PROPERTY)
+	uint64_t                                        PropertyFlags;                                     // 0x0038(0x0008)(NOT AUTO-GENERATED PROPERTY)
+	uint8_t                                         Pad_40[0x4];                                       // 0x0040(0x0004)(Fixing Size After Last Property [ Dumper-7 ])
+	int32_t                                         Offset;                                            // 0x0044(0x0004)(NOT AUTO-GENERATED PROPERTY)
+	uint8_t                                         Pad_48[0x28];                                      // 0x0048(0x0028)(Fixing Struct Size After Last Property [ Dumper-7 ])
+};
+
+class FOutputDevice
+{
+	void* VTable;
+	bool bSuppressEventTag;
+	bool bAutoEmitLineTerminator;
+};
+
+//==============================================================================================================================================
+
 struct FRotator
 {
 public:

@@ -158,19 +158,28 @@ enum class EItemClass : uint8_t
 	IC_MAX = 20,
 };
 
-enum ETraceFrameType
+struct FOutParmRec
 {
-	TraceFrameType_Game,
-	TraceFrameType_Rendering,
-	TraceFrameType_Count
+	FProperty* Property;
+	uint8_t* PropAddr;
+	FOutParmRec* NextOutParm;
 };
 
-struct FFrame
+struct FFrame : public FOutputDevice
 {
-	uint64_t Index;
-	double StartTime;
-	double EndTime;
-	ETraceFrameType FrameType;
+public:
+	UFunction* Node;
+	UObject* Object;
+	uint8_t* Code;
+	uint8_t* Locals;
+	FProperty* MostRecentProperty;
+	uint8_t* MostRecentPropertyAddress;
+	PAD(0x10);
+	FFrame* PreviousFrame;
+	FOutParmRec* OutParms;
+	FField* PropertyChainForCompiledIn;
+	UFunction* CurrentNativeFunction;
+	bool bArrayContextFailed;
 };
 
 struct FActorInstanceHandle
@@ -236,14 +245,6 @@ struct FMagazine
 public:
 	uint16_t                                        Ammo;                                              // 0x0000(0x0002)(Edit, ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
 	uint16_t                                        AmmoType;                                          // 0x0002(0x0002)(Edit, ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
-};
-
-class Server_OnFire_Params
-{
-public:
-	FRotator                                        Direction;                                               //  0x0000(0x0018)  (Parm, ZeroConstructor, IsPlainOldData, NoDestructor, NativeAccessSpecifierPublic)
-	FVector                                         SpawnLoc;                                                //  0x0018(0x0018)  (Parm, ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
-	int32_t                                         Seed;                                                    //  0x0030(0x0004)  (Parm, ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
 };
 
 class USceneComponent : public UObject
@@ -464,13 +465,12 @@ public:
 class ABaseMagazineWeapon : public ABaseWeapon
 {
 public:
-	PAD(0x224);
-	uint8_t bInfiniteAmmo : 1; // 0x14C4
-	PAD(0x25B);
+	PAD(0x480);
 
 public:
 	void Server_AddMagazine(const FMagazine& Magazine);
 	FMagazine GetCurrentMagazine();
+	void OnFire(const FRotator& Direction, const FVector& SpawnLoc);
 	void Server_OnFire(const FRotator& Direction, const FVector& SpawnLoc, int32_t Seed);
 };
 

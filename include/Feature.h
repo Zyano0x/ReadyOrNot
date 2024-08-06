@@ -31,19 +31,18 @@ private:
 	static inline APlayerCameraManager* LocalPlayerCamera = nullptr;
 	static inline UKismetSystemLibrary* UKSystemLib = nullptr;
 	static inline UKismetMathLibrary* UKMathLib = nullptr;
-	static inline UFunction* Server_OnFire_Fn = nullptr;
 
 private:
 	typedef void(__fastcall* tGetViewPoint)(ULocalPlayer*, FMinimalViewInfo*);
 	tGetViewPoint GetViewPoint = nullptr;
 
-	typedef void(__fastcall* tProcessEvent)(void*, void*, void*);
+	typedef void(__fastcall* tProcessEvent)(UObject*, UFunction*, void*);
 	tProcessEvent ProcessEvent = nullptr;
 
 	typedef void(__fastcall* tServerOnFire)(ABaseMagazineWeapon*, FRotator*, FVector*, int32_t);
 	tServerOnFire ServerOnFire = nullptr;
 
-	static void GetViewPointHook(ULocalPlayer* LocalPlayer, FMinimalViewInfo* OutViewInfo);
-	static void ProcessEventHook(UObject* Class, UFunction* Function, void* Parms);
-	static void ServerOnFireHook(ABaseMagazineWeapon* Weapon, FRotator* Direction, FVector* SpawnLoc, int32_t Seed);
+	static void __fastcall ProcessEventHook(UObject* Class, UFunction* Function, void* Parms);
+	static void __fastcall ServerOnFireHook(ABaseMagazineWeapon* Weapon, FRotator* Direction, FVector* SpawnLoc, int32_t Seed);
+	static void __fastcall GetViewPointHook(ULocalPlayer* LocalPlayer, FMinimalViewInfo* OutViewInfo);
 } extern g_Game;
