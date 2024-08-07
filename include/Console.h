@@ -52,4 +52,4 @@ private:
 	HANDLE p_Handle{};
 	HWND p_Hwnd{};
 };
-inline std::unique_ptr<Console> g_Console;
+inline std::unique_ptr<Console> g_Console = std::make_unique<Console>();

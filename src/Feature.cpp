@@ -12,7 +12,7 @@ Game::~Game() {}
 
 void __fastcall Game::GetViewPointHook(ULocalPlayer* LocalPlayer, FMinimalViewInfo* OutViewInfo)
 {
-	PLH::FnCast(g_Game->GetViewPoint, &GetViewPointHook)(LocalPlayer, OutViewInfo);
+	g_Game->GetViewPoint(LocalPlayer, OutViewInfo);
 
 	if (Settings[FREE_CAM].Value.bValue)
 	{
@@ -55,28 +55,25 @@ void __fastcall Game::ServerOnFireHook(ABaseMagazineWeapon* Weapon, FRotator* Di
 		}
 	}
 
-	PLH::FnCast(g_Game->ServerOnFire, &ServerOnFireHook)(Weapon, Direction, SpawnLoc, Seed);
+	g_Game->ServerOnFire(Weapon, Direction, SpawnLoc, Seed);
 }
 
-void Game::Initilize()
+void Game::Hook()
 {
-	uint64_t GetViewPointAddr = Signature(std::string(skCrypt("48 8B C4 48 89 58 ? 48 89 68 ? 56 57 41 57 48 81 EC ? ? ? ? 0F 29 70"))).GetPointer();
-	uint64_t ServerOnFireAddr = Signature(std::string(skCrypt("40 ? 53 57 41 ? 41 ? 41 ? 48 8D ? ? ? ? ? ? 48 81 EC ? ? ? ? 48 8B ? ? ? ? ? 48 33 ? 48 89 ? ? ? ? ? 48 8B ? 45 8B"))).GetPointer();
+	GetViewPointAddr = Signature(std::string(skCrypt("48 8B C4 48 89 58 ? 48 89 68 ? 56 57 41 57 48 81 EC ? ? ? ? 0F 29 70"))).GetPointer();
+	ServerOnFireAddr = Signature(std::string(skCrypt("40 ? 53 57 41 ? 41 ? 41 ? 48 8D ? ? ? ? ? ? 48 81 EC ? ? ? ? 48 8B ? ? ? ? ? 48 33 ? 48 89 ? ? ? ? ? 48 8B ? 45 8B"))).GetPointer();
 
 	if (GetViewPointAddr && ServerOnFireAddr)
 	{
-		GetViewPointDetour = std::make_unique<PLH::x64Detour>(GetViewPointAddr, (uint64_t)GetViewPointHook, &GetViewPoint);
-		ServerOnFireDetour = std::make_unique<PLH::x64Detour>(ServerOnFireAddr, (uint64_t)ServerOnFireHook, &ServerOnFire);
-
-		GetViewPointDetour->hook();
-		ServerOnFireDetour->hook();
+		Hooking::CreateHook(reinterpret_cast<LPVOID>(GetViewPointAddr), &GetViewPointHook, reinterpret_cast<LPVOID*>(&GetViewPoint));
+		Hooking::CreateHook(reinterpret_cast<LPVOID>(ServerOnFireAddr), &ServerOnFireHook, reinterpret_cast<LPVOID*>(&ServerOnFire));
 	}
 }
 
 void Game::UnHook()
 {
-	GetViewPointDetour->unHook();
-	ServerOnFireDetour->unHook();
+	Hooking::DisableHook(reinterpret_cast<LPVOID>(GetViewPointAddr));
+	Hooking::DisableHook(reinterpret_cast<LPVOID>(ServerOnFireAddr));
 }
 
 void Game::Setup()
@@ -175,25 +172,24 @@ void Game::Visual()
 			LocalPlayerController->ProjectWorldLocationToScreen({ Location.X, Location.Y, Location.Z + Extend.Z }, &HeadPos, false))
 		{
 			const float Distance = Player->GetDistanceTo(LocalCharacter) / 100.0f;
-			const float Height = abs(HeadPos.Y - FootPos.Y) / 0.6f;
-			const float Width = Height * 0.4f;
-
-			FVector2D Top = { HeadPos.X - Width * 0.5f, HeadPos.Y };
-			FVector2D Bottom = { HeadPos.X + Width * 0.5f, FootPos.Y };
+			const float H = FootPos.Y - HeadPos.Y;
+			const float W = H / 1.5f;
+			const float X = HeadPos.X - W * 0.5f;
+			const float Y = HeadPos.Y;
 
 			if (Settings[ESP_NAME].Value.bValue)
 			{
 				if (ShowCivilian)
 				{
-					Draw::DrawString(ImGui::GetIO().FontDefault, std::string(skCrypt("[Civilian]")), (Top.X + Bottom.X) / 2, Top.Y - 20, 15.0f, true, ImVec4(1.f, 1.f, 1.f, 1.f));
+					Draw::DrawString(ImGui::GetIO().FontDefault, std::string(skCrypt("[Civilian]")), (X + (HeadPos.X + W * 0.5f)) / 2, Y - 20, 15.0f, true, ImVec4(1.f, 1.f, 1.f, 1.f));
 				}
 				else if (ShowEnemy)
 				{
-					Draw::DrawString(ImGui::GetIO().FontDefault, std::string(skCrypt("[Suspect]")), (Top.X + Bottom.X) / 2, Top.Y - 20, 15.0f, true, ImVec4(1.f, 1.f, 1.f, 1.f));
+					Draw::DrawString(ImGui::GetIO().FontDefault, std::string(skCrypt("[Suspect]")), (X + (HeadPos.X + W * 0.5f)) / 2, Y - 20, 15.0f, true, ImVec4(1.f, 1.f, 1.f, 1.f));
 				}
 				else if (ShowFriendly)
 				{
-					Draw::DrawString(ImGui::GetIO().FontDefault, std::string(skCrypt("[Team]")), (Top.X + Bottom.X) / 2, Top.Y - 20, 15.0f, true, ImVec4(1.f, 1.f, 1.f, 1.f));
+					Draw::DrawString(ImGui::GetIO().FontDefault, std::string(skCrypt("[Team]")), (X + (HeadPos.X + W * 0.5f)) / 2, Y - 20, 15.0f, true, ImVec4(1.f, 1.f, 1.f, 1.f));
 				}
 			}
 
@@ -253,14 +249,14 @@ void Game::Visual()
 
 			if (Settings[ESP_SNAP_LINES].Value.bValue)
 			{
-				Draw::DrawLine(m_ScreenWidth / 2, m_ScreenHeight, (Top.X + Bottom.X) / 2, Bottom.Y, 1.5f, m_Color);
+				Draw::DrawLine(m_ScreenWidth / 2, m_ScreenHeight, (X + ((HeadPos.X + W * 0.5f))) / 2, FootPos.Y, 1.5f, m_Color);
 			}
 
 			if (Settings[ESP_DISTANCE].Value.bValue && !Settings[ESP_WEAPON].Value.bValue)
 			{
 				Draw::DrawString(ImGui::GetIO().FontDefault,
 					std::to_string((int)Distance).append(std::string(skCrypt("M"))),
-					(Top.X + Bottom.X) / 2, Bottom.Y + 5, 15.f, true, ImVec4(1.f, 1.f, 1.f, 1.f));
+					(X + (HeadPos.X + W * 0.5f)) / 2, FootPos.Y + 5, 15.f, true, ImVec4(1.f, 1.f, 1.f, 1.f));
 			}
 			else if (!Settings[ESP_DISTANCE].Value.bValue && Settings[ESP_WEAPON].Value.bValue)
 			{
@@ -272,7 +268,7 @@ void Game::Visual()
 				}
 
 				Draw::DrawString(ImGui::GetIO().FontDefault,
-					WeaponName, (Top.X + Bottom.X) / 2, Bottom.Y + 5, 15.f, true, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+					WeaponName, (X + (HeadPos.X + W * 0.5f)) / 2, FootPos.Y + 5, 15.f, true, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
 			}
 			else if (Settings[ESP_DISTANCE].Value.bValue && Settings[ESP_WEAPON].Value.bValue)
 			{
@@ -284,10 +280,10 @@ void Game::Visual()
 				}
 
 				Draw::DrawString(ImGui::GetIO().FontDefault,
-					WeaponName, (Top.X + Bottom.X) / 2, Bottom.Y + 5, 15.f, true, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+					WeaponName, (X + (HeadPos.X + W * 0.5f)) / 2, FootPos.Y + 5, 15.f, true, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
 				Draw::DrawString(ImGui::GetIO().FontDefault,
 					std::to_string((int)Distance).append(std::string(skCrypt("M"))),
-					(Top.X + Bottom.X) / 2, Bottom.Y + 20, 15.f, true, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+					(X + (HeadPos.X + W * 0.5f)) / 2, FootPos.Y + 20, 15.f, true, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
 			}
 
 			if (Settings[ESP_HEALTH].Value.bValue)
@@ -298,13 +294,13 @@ void Game::Visual()
 					float MaxHealth = Player->GetMaxHealth();
 					float Percent = Health * 100.0f / MaxHealth;
 
-					float HWidth = Width / 10;
+					float HWidth = W / 10;
 					if (HWidth < 2.0f)
 						HWidth = 2.0f;
 					if (HWidth > 3.0f)
 						HWidth = 3.0f;
 
-					Draw::VerticalHealthBar(HeadPos.X - (Width / 2.0f) - 5.0f, HeadPos.Y, HWidth, FootPos.Y - HeadPos.Y, (int)Percent, true, BarType::Health);
+					Draw::VerticalHealthBar(HeadPos.X - (W / 2.0f) - 5.0f, HeadPos.Y, HWidth, FootPos.Y - HeadPos.Y, (int)Percent, true, BarType::Health);
 				}
 			}
 
@@ -315,10 +311,16 @@ void Game::Visual()
 					switch (Settings[ESP_BOX].Value.iValue)
 					{
 					case 1:
-						Draw::DrawBox(Top.X, Top.Y, Bottom.X, Bottom.Y, true, m_Color);
+						Draw::DrawBoxOutline(X, Y, W, H, false, m_Color);
 						break;
 					case 2:
-						Draw::DrawCornersBox(Top.X, Top.Y, Bottom.X, Bottom.Y, true, true, m_Color);
+						Draw::DrawBoxOutline(X, Y, W, H, true, m_Color);
+						break;
+					case 3:
+						Draw::DrawCornersBoxOutline(X, Y, W, H, false, m_Color);
+						break;
+					case 4:
+						Draw::DrawCornersBoxOutline(X, Y, W, H, true, m_Color);
 						break;
 					}
 				}
@@ -346,16 +348,15 @@ void Game::Visual()
 		if (HeadPos.IsValid() && FootPos.IsValid())
 		{
 			const float Distance = Item->GetDistanceTo(LocalCharacter) / 100.0f;
-			const float Height = abs(HeadPos.Y - FootPos.Y) / 0.6f;
-			const float Width = Height * 0.4f;
-
-			FVector2D Top = { HeadPos.X - Width * 0.5f, HeadPos.Y };
-			FVector2D Bottom = { HeadPos.X + Width * 0.5f, FootPos.Y };
+			const float H = FootPos.Y - HeadPos.Y;
+			const float W = H / 1.5f;
+			const float X = HeadPos.X - W * 0.5f;
+			const float Y = HeadPos.Y;
 
 			if (Item->bIsEvidence)
 			{
 				Draw::DrawString(ImGui::GetIO().FontDefault, std::string(skCrypt("Evidence ")).append(std::to_string((int)Distance)).append(std::string(skCrypt("M"))),
-					(Top.X + Bottom.X) / 2, Top.Y, 15.0f, true, Settings[ESP_EVIDENCE_COLOR].Value.v4Value);
+					(X + (HeadPos.X + W * 0.5f)) / 2, Y, 15.0f, true, Settings[ESP_EVIDENCE_COLOR].Value.v4Value);
 			}
 		}
 	}
@@ -557,6 +558,42 @@ float Game::CalculateHeadCircleRadius(float Distance)
 	}
 }
 
+void Game::RotateTriangle(std::array<FVector, 3>& Points, float Rotation)
+{
+	const auto PointsCenter = (Points.at(0) + Points.at(1) + Points.at(2)) / 3;
+	for (auto& Point : Points)
+	{
+		Point = Point - PointsCenter;
+
+		const auto TempX = Point.X;
+		const auto tempY = Point.Y;
+
+		const auto theta = DEG2RAD(Rotation);
+		const auto c = cosf(theta);
+		const auto s = sinf(theta);
+
+		Point.X = TempX * c - tempY * s;
+		Point.Y = TempX * s + tempY * c;
+
+		Point = Point + PointsCenter;
+	}
+}
+
+void Game::VectorAnglesRadar(FVector& Forward, FVector& Angles)
+{
+	if (Forward.X == 0.f && Forward.Y == 0.f)
+	{
+		Angles.X = Forward.Z > 0.f ? -90.f : 90.f;
+		Angles.Y = 0.f;
+	}
+	else
+	{
+		Angles.X = RAD2DEG(atan2(-Forward.Z, Forward.Magnitude()));
+		Angles.Y = RAD2DEG(atan2(Forward.Y, Forward.X));
+	}
+	Angles.Z = 0.f;
+}
+
 std::string Game::GetTrapType(ETrapType Type)
 {
 	switch (Type)
@@ -570,6 +607,35 @@ std::string Game::GetTrapType(ETrapType Type)
 	default:
 		return std::string(skCrypt("[UNK]"));
 	}
+}
+
+FVector2D Game::WorldToRadar(FRotator Rotation, FVector Location, FVector EntityLocation, FVector2D RadarPosition, FVector2D RadarSize)
+{
+	FVector2D DotPos;
+	FVector2D Direction;
+
+	// Calculate Direction
+	Direction.X = EntityLocation.Y - Location.Y;
+	Direction.Y = EntityLocation.X - Location.X;
+
+	// Get Rotation
+	float LocalAngles = Rotation.Yaw;
+
+	float Radian = DEG2RAD(LocalAngles);
+
+	// Calculate Raw DotPos
+	DotPos.X = (Direction.X * (float)cos(Radian) - Direction.Y * (float)sin(Radian)) / 150.0f;
+	DotPos.Y = (Direction.Y * (float)cos(Radian) + Direction.X * (float)sin(Radian)) / 150.0f;
+
+	// Add RadarPos To Calculated DotPos
+	DotPos.X = DotPos.X + RadarPosition.X + RadarSize.X / 2.f;
+	DotPos.Y = -DotPos.Y + RadarPosition.Y + RadarSize.Y / 2.f;
+
+	// Clamp Dots To RadarSize ( Where 18 = Width/Height of the Dot)
+	DotPos.X = std::clamp(DotPos.X, RadarPosition.X, RadarPosition.X + RadarSize.X - 18);
+	DotPos.Y = std::clamp(DotPos.Y, RadarPosition.Y, RadarPosition.Y + RadarSize.Y - 18);
+
+	return DotPos;
 }
 
 FVector Game::GetAimWorldLocation(AReadyOrNotCharacter* Player)

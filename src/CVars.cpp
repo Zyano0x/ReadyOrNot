@@ -41,7 +41,7 @@ void BotInitSettings()
 	Settings[ESP_VISIBLE_COLOR] = BotAddConfig("Esp Settings", "Esp_VisibleColor", ImVec4(0.38f, 0.03f, 0.77f, 1.00f));
 	Settings[ESP_FRIENDLY] = BotAddConfig("Esp Settings", "Esp_Friendlies", false);
 	Settings[ESP_FRIENDLY_COLOR] = BotAddConfig("Esp Settings", "Esp_FriendlyColor", ImVec4(0.08f, 0.64f, 0.84f, 1.00f));
-	Settings[ESP_BOX] = BotAddConfig("Esp Settings", "Esp_Box", 0, 0, 2); // Off, 2D-F, Corn-F
+	Settings[ESP_BOX] = BotAddConfig("Esp Settings", "Esp_Box", 0, 0, 4); // Off, 2D, 2D-F, Corn, Corn-F
 	Settings[ESP_SNAP_LINES] = BotAddConfig("Esp Settings", "Esp_SnapLines", false);
 	Settings[ESP_NAME] = BotAddConfig("Esp Settings", "Esp_Name", false);
 	Settings[ESP_SKELETON] = BotAddConfig("Esp Settings", "Esp_Skeleton", false);

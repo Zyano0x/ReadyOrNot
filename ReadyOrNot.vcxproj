@@ -158,6 +158,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\Hooking.h" />
     <ClInclude Include="include\Console.h" />
     <ClInclude Include="include\CVars.h" />
     <ClInclude Include="include\Drawing.h" />
@@ -208,17 +209,14 @@
     <ClCompile Include="src\Drawing.cpp" />
     <ClCompile Include="src\DX11.cpp" />
     <ClCompile Include="src\Feature.cpp" />
+    <ClCompile Include="src\Hooking.cpp" />
     <ClCompile Include="src\Memory.cpp" />
     <ClCompile Include="src\Menu.cpp" />
     <ClCompile Include="src\SDK.cpp" />
     <ClCompile Include="src\UECore.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Library Include="libs\asmjit\asmjit.lib" />
-    <Library Include="libs\asmtk\asmtk.lib" />
-    <Library Include="libs\polyhook2\PolyHook.lib" />
-    <Library Include="libs\Zycore\Zycore.lib" />
-    <Library Include="libs\Zydis\Zydis.lib" />
+    <Library Include="libs\MinHook\MinHook.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

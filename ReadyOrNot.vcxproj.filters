@@ -19,7 +19,7 @@
     <Filter Include="Resource Files\Encrypt">
       <UniqueIdentifier>{15a9c495-d8bc-451f-a7c2-449b3693e22a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files\PolyHook">
+    <Filter Include="Resource Files\MinHook">
       <UniqueIdentifier>{fd4d4d5a-f093-456a-8ae3-651b831b7269}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -58,6 +58,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\Feature.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Hooking.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -113,22 +116,13 @@
     <ClCompile Include="libs\ImGui\imgui_impl_dx11.cpp">
       <Filter>Resource Files\ImGui</Filter>
     </ClCompile>
+    <ClCompile Include="src\Hooking.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Library Include="libs\asmjit\asmjit.lib">
-      <Filter>Resource Files\PolyHook</Filter>
-    </Library>
-    <Library Include="libs\asmtk\asmtk.lib">
-      <Filter>Resource Files\PolyHook</Filter>
-    </Library>
-    <Library Include="libs\polyhook2\PolyHook.lib">
-      <Filter>Resource Files\PolyHook</Filter>
-    </Library>
-    <Library Include="libs\Zycore\Zycore.lib">
-      <Filter>Resource Files\PolyHook</Filter>
-    </Library>
-    <Library Include="libs\Zydis\Zydis.lib">
-      <Filter>Resource Files\PolyHook</Filter>
+    <Library Include="libs\MinHook\MinHook.lib">
+      <Filter>Resource Files\MinHook</Filter>
     </Library>
   </ItemGroup>
 </Project>

@@ -13,17 +13,18 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <array>
 #include <mutex>
 #include <sstream>
 #include <iomanip>
 #include <functional>
+#include <algorithm>
 
 #include <d3d11.h>
 #pragma comment(lib, "d3d11.lib")
 
-#include "PolyHook2/Detour/x64Detour.hpp"
-#include "PolyHook2/Virtuals/VFuncSwapHook.hpp"
-#pragma comment(lib, "PolyHook.lib")
+#include "MinHook/MinHook.h"
+#pragma comment(lib, "MinHook.lib");
 
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_internal.h"
@@ -35,6 +36,7 @@
 #include "Lazy.h"
 #include "Obfuscate.h"
 #include "Memory.h"
+#include "Hooking.h"
 
 #include "SDK.h"
 #include "Console.h"

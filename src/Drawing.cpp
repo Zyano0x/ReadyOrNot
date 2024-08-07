@@ -19,6 +19,16 @@ void Draw::DrawCircleFilled(float x1, float y1, float radius, ImVec4 color)
 	ImGui::GetBackgroundDrawList()->AddCircleFilled(ImVec2(x1, y1), radius, ImGui::GetColorU32(color));
 }
 
+void Draw::DrawRect(float x, float y, float w, float h, ImVec4 color, float rounding)
+{
+	ImGui::GetBackgroundDrawList()->AddRect(ImVec2(x, y), ImVec2(x + w, y + h), ImGui::GetColorU32(color), rounding);
+}
+
+void Draw::DrawRectFilled(float x, float y, float w, float h, ImVec4 color, float rounding)
+{
+	ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(x, y), ImVec2(x + w, y + h), ImGui::GetColorU32(color), rounding);
+}
+
 void Draw::DrawTriangleFilled(float x1, float y1, float x2, float y2, float x3, float y3, ImVec4 color)
 {
 	ImGui::GetBackgroundDrawList()->AddTriangleFilled(ImVec2(x1, y1), ImVec2(x2, y2), ImVec2(x3, y3), ImGui::GetColorU32(color));
@@ -35,48 +45,57 @@ void Draw::DrawTriangle(float x1, float y1, float x2, float y2, float x3, float 
 void Draw::DrawBox(float x, float y, float w, float h, bool filled, ImVec4 color)
 {
 	if (filled)
-		ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(x, y), ImVec2(w, h), ImGui::GetColorU32(ImVec4(color.x, color.y, color.z, 0.2f)));
+		ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(x, y), ImVec2(x + w, y + h), ImGui::GetColorU32(ImVec4(color.x, color.y, color.z, 0.2f)));
 
-	DrawLine(x, y, w, y, 1.5f, color);
-	DrawLine(x, h, w, h, 1.5f, color);
-	DrawLine(x, y, x, h, 1.5f, color);
-	DrawLine(w, y, w, h, 1.5f, color);
+	ImGui::GetBackgroundDrawList()->AddRect(ImVec2(x, y), ImVec2(x + w, y + h), ImGui::GetColorU32(color));
 }
 
-void Draw::DrawCornersBox(float x, float y, float w, float h, bool shadow, bool filled, ImVec4 color)
+void Draw::DrawBoxOutline(float x, float y, float w, float h, bool filled, ImVec4 color)
 {
-	float hlength = (w - x) / 3;
-	float vlength = (h - y) / 3;
+	DrawBox(x + 1.f, y + 1.f, w, h, false, ImVec4(0.0f, 0.0f, 0.0f, color.w));
+	DrawBox(x - 1.f, y - 1.f, w, h, false, ImVec4(0.0f, 0.0f, 0.0f, color.w));
+	DrawBox(x - 1.f, y + 1.f, w, h, false, ImVec4(0.0f, 0.0f, 0.0f, color.w));
+	DrawBox(x + 1.f, y - 1.f, w, h, false, ImVec4(0.0f, 0.0f, 0.0f, color.w));
 
+	DrawBox(x + 1.f, y, w, h, false, ImVec4(0.0f, 0.0f, 0.0f, color.w));
+	DrawBox(x - 1.f, y, w, h, false, ImVec4(0.0f, 0.0f, 0.0f, color.w));
+	DrawBox(x, y + 1.f, w, h, false, ImVec4(0.0f, 0.0f, 0.0f, color.w));
+	DrawBox(x, y - 1.f, w, h, false, ImVec4(0.0f, 0.0f, 0.0f, color.w));
+
+	DrawBox(x, y, w, h, filled, color);
+}
+
+void Draw::DrawCornersBox(float x, float y, float w, float h, bool filled, ImVec4 color)
+{
 	if (filled)
-		ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(x, y), ImVec2(w, h), ImGui::GetColorU32(ImVec4(color.x, color.y, color.z, 0.3f)));
+		ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(x - 1.5f, y - 1.5f), ImVec2(x + w + 1.5f, y + h + 1.5f), ImGui::GetColorU32(ImVec4(color.x, color.y, color.z, 0.2f)));
 
-	if (shadow)
-	{
-		ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(x - 1.0f, y - 1.0f), ImVec2(x + hlength + 2.0f, y + 2.0f), ImGui::GetColorU32(ImVec4(0.f, 0.f, 0.f, 0.4f)));
-		ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(x - 1.0f, y - 1.0f), ImVec2(x + 2.0f, y + vlength + 2.0f), ImGui::GetColorU32(ImVec4(0.f, 0.f, 0.f, 0.4f)));
+	DrawLine(x, y, x + w / 4.0f, y, 1.5f, color);
+	DrawLine(x, y, x, y + h / 4.0f, 1.5f, color);
 
-		ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(w - hlength - 1.0f, y - 1.0f), ImVec2(w + 1.0f, y + 2.0f), ImGui::GetColorU32(ImVec4(0.f, 0.f, 0.f, 0.4f)));
-		ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(w - 2.0f, y - 1.0f), ImVec2(w + 1.0f, y + vlength + 2.0f), ImGui::GetColorU32(ImVec4(0.f, 0.f, 0.f, 0.4f)));
+	DrawLine(x + w, y, x + w - w / 4.0f, y, 1.5f, color);
+	DrawLine(x + w, y, x + w, y + h / 4.0f, 1.5f, color);
 
-		ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(x - 1.0f, h - 2.0f), ImVec2(x + hlength + 2.0f, h + 1.0f), ImGui::GetColorU32(ImVec4(0.f, 0.f, 0.f, 0.4f)));
-		ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(x - 1.0f, h - vlength - 1.0f), ImVec2(x + 2.0f, h + 1.0f), ImGui::GetColorU32(ImVec4(0.f, 0.f, 0.f, 0.4f)));
+	DrawLine(x, y + h, x + w / 4.0f, y + h, 1.5f, color);
+	DrawLine(x, y + h, x, y + h - h / 4.0f, 1.5f, color);
 
-		ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(w - hlength - 1.0f, h - 2.0f), ImVec2(w + 1.0f, h + 1.0f), ImGui::GetColorU32(ImVec4(0.f, 0.f, 0.f, 0.4f)));
-		ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(w - 2.0f, h - vlength - 1.0f), ImVec2(w + 1.0f, h + 1.0f), ImGui::GetColorU32(ImVec4(0.f, 0.f, 0.f, 0.4f)));
-	}
+	DrawLine(x + w, y + h, x + w, y + h - h / 4.0f, 1.5f, color);
+	DrawLine(x + w, y + h, x + w - w / 4.0f, y + h, 1.5f, color);
+}
 
-	ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(x, y), ImVec2(x + hlength + 1.0f, y + 1.0f), ImGui::GetColorU32(color));
-	ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(x, y), ImVec2(x + 1.0f, y + vlength + 1.0f), ImGui::GetColorU32(color));
+void Draw::DrawCornersBoxOutline(float x, float y, float w, float h, bool filled, ImVec4 color)
+{
+	DrawCornersBox(x - 1.f, y + 1.f, w, h, false, ImVec4(0.0f, 0.0f, 0.0f, color.w));
+	DrawCornersBox(x - 1.f, y - 1.f, w, h, false, ImVec4(0.0f, 0.0f, 0.0f, color.w));
+	DrawCornersBox(x + 1.f, y + 1.f, w, h, false, ImVec4(0.0f, 0.0f, 0.0f, color.w));
+	DrawCornersBox(x + 1.f, y - 1.f, w, h, false, ImVec4(0.0f, 0.0f, 0.0f, color.w));
 
-	ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(w - hlength, y), ImVec2(w, y + 1.0f), ImGui::GetColorU32(color));
-	ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(w - 1.0f, y), ImVec2(w, y + vlength + 1.0f), ImGui::GetColorU32(color));
+	DrawCornersBox(x - 1.f, y, w, h, false, ImVec4(0.0f, 0.0f, 0.0f, color.w));
+	DrawCornersBox(x, y - 1.f, w, h, false, ImVec4(0.0f, 0.0f, 0.0f, color.w));
+	DrawCornersBox(x, y + 1.f, w, h, false, ImVec4(0.0f, 0.0f, 0.0f, color.w));
+	DrawCornersBox(x + 1.f, y, w, h, false, ImVec4(0.0f, 0.0f, 0.0f, color.w));
 
-	ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(x, h - 1.0f), ImVec2(x + hlength + 1.0f, h), ImGui::GetColorU32(color));
-	ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(x, h - vlength), ImVec2(x + 1.0f, h), ImGui::GetColorU32(color));
-
-	ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(w - hlength, h - 1.0f), ImVec2(w, h), ImGui::GetColorU32(color));
-	ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(w - 1.0f, h - vlength), ImVec2(w, h), ImGui::GetColorU32(color));
+	DrawCornersBox(x, y, w, h, filled, color);
 }
 
 void Draw::DrawString(ImFont* font, std::string text, float x, float y, float size, bool shadow, ImVec4 color)

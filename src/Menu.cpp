@@ -96,7 +96,7 @@ void Menu::MainMenu()
 					ImGui::Checkbox("Weapon", &Settings[ESP_WEAPON].Value.bValue);
 					ImGui::Checkbox("Evidence", &Settings[ESP_EVIDENCE].Value.bValue); ImGui::ColorEdit4("Evidence Color", (float*)&Settings[ESP_EVIDENCE_COLOR].Value.v4Value, ImGuiColorEditFlags_NoBorder | ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | ImGuiColorEditFlags_NoDragDrop);
 					ImGui::Checkbox("Trap", &Settings[ESP_TRAP].Value.bValue); ImGui::ColorEdit4("Trap Color", (float*)&Settings[ESP_TRAP_COLOR].Value.v4Value, ImGuiColorEditFlags_NoBorder | ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | ImGuiColorEditFlags_NoDragDrop);
-					ImGui::Combo("Box", &Settings[ESP_BOX].Value.iValue, "Off\0" "2D Filled\0" "Corner Filled\0");
+					ImGui::Combo("Box", &Settings[ESP_BOX].Value.iValue, "Off\0" "2D Box\0" "2D Box Filled\0" "Corners Box\0" "Corners Box Filled\0");
 				}
 				if (!Settings[ESP_ENABLED].Value.bValue)
 				{

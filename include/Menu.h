@@ -12,4 +12,4 @@ public:
 	Menu() = default;
 	~Menu() = default;
 };
-inline std::unique_ptr<Menu> g_Menu;
+inline std::unique_ptr<Menu> g_Menu = std::make_unique<Menu>();
