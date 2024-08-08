@@ -1,6 +1,6 @@
 #include "pch.h"
 
-void Menu::Draw()
+void Render::Menu()
 {
 	if (m_IsShowMenu)
 	{
@@ -8,7 +8,7 @@ void Menu::Draw()
 	}
 }
 
-void Menu::MainMenu()
+void Render::MainMenu()
 {
 	ImGuiIO& io = ImGui::GetIO();
 	ImGuiStyle& Style = ImGui::GetStyle();
@@ -26,10 +26,10 @@ void Menu::MainMenu()
 	ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, Settings[FRAME_BG_HOVERED].Value.v4Value);
 	ImGui::PushStyleColor(ImGuiCol_FrameBgActive, Settings[FRAME_BG_ACTIVE].Value.v4Value);
 
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(500, 495));
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(500, 520));
 
 	ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x / 2.f, io.DisplaySize.y / 2.f), ImGuiCond_Once, ImVec2(0.5f, 0.5f));
-	ImGui::SetNextWindowSize(ImVec2(500, 495), ImGuiCond_Once);
+	ImGui::SetNextWindowSize(ImVec2(500, 520), ImGuiCond_Once);
 	if (!ImGui::Begin(skCrypt("Nixware"), NULL, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoTitleBar))
 		return;
 
@@ -125,9 +125,12 @@ void Menu::MainMenu()
 				ImGui::Checkbox("Auto Arrest", &Settings[AUTO_ARREST].Value.bValue);
 				ImGui::Checkbox("Auto Report", &Settings[AUTO_REPORT].Value.bValue);
 				ImGui::Checkbox("Auto Secure Evidence", &Settings[AUTO_SECURE_EVIDENCE].Value.bValue);
+				ImGui::Checkbox("Radar", &Settings[ESP_RADAR].Value.bValue);
 
 				ImGui::SliderInt("Speed Multiplier", &Settings[SPEED_MULTIPLIER].Value.iValue, Settings[SPEED_MULTIPLIER].Value.iMin, Settings[SPEED_MULTIPLIER].Value.iMax);
 				ImGui::SliderFloat("FOV", &Settings[FOV_AMOUNT].Value.fValue, Settings[FOV_AMOUNT].Value.fMin, Settings[FOV_AMOUNT].Value.fMax);
+				ImGui::SliderFloat("Radar X", &Settings[ESP_RADAR_X].Value.fValue, Settings[ESP_RADAR_X].Value.fMin, Settings[ESP_RADAR_X].Value.fMax);
+				ImGui::SliderFloat("Radar Y", &Settings[ESP_RADAR_Y].Value.fValue, Settings[ESP_RADAR_Y].Value.fMin, Settings[ESP_RADAR_Y].Value.fMax);
 			}
 			ImGui::EndChild();
 
@@ -216,4 +219,35 @@ void Menu::MainMenu()
 
 	ImGui::PopStyleColor(9);
 	ImGui::PopStyleVar();
+}
+
+void Render::Radar()
+{
+	if (!Settings[ESP_RADAR].Value.bValue)
+		return;
+
+	float WX = g_Game->m_ScreenWidth;
+	float WY = g_Game->m_ScreenHeight;
+	float RadarX = WX - Settings[ESP_RADAR_X].Value.fValue;
+	float RadarY = WY - Settings[ESP_RADAR_Y].Value.fValue;
+	float FOVLine = Settings[FOV_AMOUNT].Value.fValue;
+	float Radius = 100.0f;  // Fixed radius for the radar circle
+
+	// Draw the radar background circle
+	ImGui::GetForegroundDrawList()->AddCircleFilled(ImVec2(RadarX, RadarY), Radius, ImGui::GetColorU32(ImVec4(0.0f, 0.0f, 0.0f, 0.47f)));
+
+	// Calculate FOV lines
+	FOVLine /= 2;
+	float LineY = Radius * cos(DEG2RAD(FOVLine));
+	float LineX = sqrt(Radius * Radius - LineY * LineY);
+
+	// Draw FOV lines
+	ImGui::GetForegroundDrawList()->AddLine(ImVec2(RadarX, RadarY), ImVec2(RadarX - LineX, RadarY - LineY), ImGui::GetColorU32(ImVec4(0.6f, 0.4f, 1.0f, 1.0f)), 1.5f);
+	ImGui::GetForegroundDrawList()->AddLine(ImVec2(RadarX, RadarY), ImVec2(RadarX + LineX, RadarY - LineY), ImGui::GetColorU32(ImVec4(0.6f, 0.4f, 1.0f, 1.0f)), 1.5f);
+
+	// Draw the central line
+	ImGui::GetForegroundDrawList()->AddLine(ImVec2(RadarX, RadarY), ImVec2(RadarX, RadarY - Radius), ImGui::GetColorU32(ImVec4(1.0f, 1.0f, 0, 0.47f)), 1.0f);
+
+	// Draw the center point of the radar
+	ImGui::GetForegroundDrawList()->AddCircleFilled(ImVec2(RadarX, RadarY), 4.0f, ImGui::GetColorU32(ImVec4(1.0f, 1.0f, 0.2f, 1.0f)));
 }

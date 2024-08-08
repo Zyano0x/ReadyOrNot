@@ -877,6 +877,27 @@ double FVector2D::Distance(FVector2D& v) const
 	return pow(v.X - X, 2) + pow(v.Y - Y, 2);
 }
 
+double FVector2D::Dot(const FVector2D& b) const
+{
+	return (X * b.X) + (Y * b.Y);
+}
+
+double FVector2D::MagnitudeSqr() const
+{
+	return Dot(*this);
+}
+
+double FVector2D::Magnitude() const
+{
+	return sqrt(MagnitudeSqr());
+}
+
+FVector2D FVector2D::Normalize() const
+{
+	const double fMagnitude = Magnitude();
+	return FVector2D(X / fMagnitude, Y / fMagnitude);
+}
+
 FVector2D FVector2D::operator +(const FVector2D& other) const
 {
 	return FVector2D(X + other.X, Y + other.Y);

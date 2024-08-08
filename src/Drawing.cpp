@@ -68,7 +68,7 @@ void Draw::DrawBoxOutline(float x, float y, float w, float h, bool filled, ImVec
 void Draw::DrawCornersBox(float x, float y, float w, float h, bool filled, ImVec4 color)
 {
 	if (filled)
-		ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(x - 1.5f, y - 1.5f), ImVec2(x + w + 1.5f, y + h + 1.5f), ImGui::GetColorU32(ImVec4(color.x, color.y, color.z, 0.2f)));
+		ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(x, y), ImVec2(x + w + 1.0f, y + h + 1.0f), ImGui::GetColorU32(ImVec4(color.x, color.y, color.z, 0.2f)));
 
 	DrawLine(x, y, x + w / 4.0f, y, 1.5f, color);
 	DrawLine(x, y, x, y + h / 4.0f, 1.5f, color);

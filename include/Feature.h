@@ -17,21 +17,21 @@ public:
 	void Visual();
 	void Aimbot();
 	void Misc();
+	void Radar();
 
 	float CalculateHeadCircleRadius(float Distance);
-	void RotateTriangle(std::array<FVector, 3>& Points, float Rotation);
-	void VectorAnglesRadar(FVector& Forward, FVector& Angles);
 	std::string GetTrapType(ETrapType Type);
-	FVector2D WorldToRadar(FRotator Rotation, FVector Location, FVector EntityLocation, FVector2D RadarPosition, FVector2D RadarSize);
+	std::string GetTrapState(ETrapState State);
+	FVector2D WorldToRadar(FRotator Rotation, FVector Location, FVector EntityLocation, FVector2D RadarCenter, float RadarRadius);
 	FVector GetAimWorldLocation(AReadyOrNotCharacter* Player);
-	FVector GetDirectionUnitVector(FVector From, FVector To);
 	FRotator CalcAngle(FVector Src, FVector Dst, FRotator OldRotation, float Smoothing);
 	AReadyOrNotCharacter* GetBestPlayer();
-	UGameViewportClient* GetViewport(UWorld* World);
+	UGameViewportClient* GetViewportClient(UWorld* World);
 
-private:
 	int m_ScreenWidth = 0;
 	int m_ScreenHeight = 0;
+
+private:
 	ImVec4 m_Color{};
 	AReadyOrNotCharacter* BestPlayer = nullptr;
 	APlayerController* LocalPlayerController = nullptr;

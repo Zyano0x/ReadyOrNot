@@ -247,6 +247,14 @@ public:
 	uint16_t                                        AmmoType;                                          // 0x0002(0x0002)(Edit, ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
 };
 
+struct FCameraCacheEntry
+{
+public:
+	float                                  Timestamp;                                         // 0x0000(0x0004)(ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+	uint8_t                                Pad_4[0xC];                                        // 0x0004(0x000C)(Fixing Size After Last Property [ Dumper-7 ])
+	FMinimalViewInfo                       POV;                                               // 0x0010(0x07C0)(NativeAccessSpecifierPublic)
+};
+
 class USceneComponent : public UObject
 {
 public:
@@ -494,7 +502,9 @@ public:
 class APlayerCameraManager : public AActor
 {
 public:
-	PAD(0x2128);
+	PAD(0x1088);
+	FCameraCacheEntry CameraCachePrivate; // 0x1320
+	PAD(0x8D0);
 
 public:
 	FVector GetCameraLocation();
@@ -637,6 +647,9 @@ public:
 	PAD(0x10);
 	TArray<ULocalPlayer*> LocalPlayers; // 0x38
 	PAD(0x178);
+
+public:
+	ULocalPlayer* GetLocalPlayers();
 };
 
 class ULevel : public UObject
@@ -691,6 +704,7 @@ class UKismetMathLibrary : public UObject
 {
 public:
 	float Vector_Distance(const FVector& v1, const FVector& v2);
+	FVector RotatorToVector(const FRotator& InRot);
 	FRotator FindLookAtRotation(const FVector& Start, const FVector& Target);
 
 public:

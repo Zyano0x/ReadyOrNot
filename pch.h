@@ -41,7 +41,7 @@
 #include "SDK.h"
 #include "Console.h"
 #include "CVars.h"
-#include "Menu.h"
+#include "Render.h"
 #include "Drawing.h"
 #include "Feature.h"
 #include "DX11.h"

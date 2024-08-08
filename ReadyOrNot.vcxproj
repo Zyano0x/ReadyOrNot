@@ -166,7 +166,7 @@
     <ClInclude Include="include\Feature.h" />
     <ClInclude Include="include\Lazy.h" />
     <ClInclude Include="include\Memory.h" />
-    <ClInclude Include="include\Menu.h" />
+    <ClInclude Include="include\Render.h" />
     <ClInclude Include="include\Obfuscate.h" />
     <ClInclude Include="include\SDK.h" />
     <ClInclude Include="include\UECore.h" />
@@ -211,7 +211,7 @@
     <ClCompile Include="src\Feature.cpp" />
     <ClCompile Include="src\Hooking.cpp" />
     <ClCompile Include="src\Memory.cpp" />
-    <ClCompile Include="src\Menu.cpp" />
+    <ClCompile Include="src\Render.cpp" />
     <ClCompile Include="src\SDK.cpp" />
     <ClCompile Include="src\UECore.cpp" />
   </ItemGroup>

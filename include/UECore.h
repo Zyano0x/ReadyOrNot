@@ -715,6 +715,10 @@ public:
 	FVector2D(double x, double y);
 	bool IsValid();
 	double Distance(FVector2D& v) const;
+	double Dot(const FVector2D& b) const;
+	double MagnitudeSqr() const;
+	double Magnitude() const;
+	FVector2D Normalize() const;
 	FVector2D operator +(const FVector2D& other) const;
 	FVector2D operator +(double scalar) const;
 	FVector2D operator -(double scalar) const;

@@ -41,6 +41,10 @@ void __fastcall Game::GetViewPointHook(ULocalPlayer* LocalPlayer, FMinimalViewIn
 	{
 		OutViewInfo->FOV = Settings[FOV_AMOUNT].Value.fValue;
 	}
+	else
+	{
+		Settings[FOV_AMOUNT].Value.fValue = OutViewInfo->FOV;
+	}
 }
 
 void __fastcall Game::ServerOnFireHook(ABaseMagazineWeapon* Weapon, FRotator* Direction, FVector* SpawnLoc, int32_t Seed)
@@ -86,7 +90,7 @@ void Game::Setup()
 	if (!UKSystemLib->IsValid(OwningGameInstance))
 		return;
 
-	ULocalPlayer* LocalPlayer = OwningGameInstance->LocalPlayers[0];
+	ULocalPlayer* LocalPlayer = OwningGameInstance->GetLocalPlayers();
 	if (!LocalPlayer)
 		return;
 
@@ -383,8 +387,9 @@ void Game::Visual()
 			const float Distance = Trap->GetDistanceTo(LocalCharacter) / 100.0f;
 			std::string TrapName = Trap->TrapName.IsValid() ? Trap->TrapName.ToString() : "";
 			std::string TrapType = g_Game->GetTrapType(Trap->TrapType);
+			std::string TrapState = g_Game->GetTrapState(Trap->TrapStatus);
 
-			Draw::DrawString(ImGui::GetIO().FontDefault, TrapType.append(TrapName).append(skCrypt(" ")).append(std::to_string((int)Distance)).append(std::string(skCrypt("M"))),
+			Draw::DrawString(ImGui::GetIO().FontDefault, TrapType.append(TrapState).append(TrapName).append(skCrypt(" ")).append(std::to_string((int)Distance)).append(std::string(skCrypt("M"))),
 				Position.X, Position.Y, 15.0f, true, Settings[ESP_TRAP_COLOR].Value.v4Value);
 		}
 	}
@@ -536,6 +541,65 @@ void Game::Misc()
 	}
 }
 
+void Game::Radar()
+{
+	if (!Settings[ESP_RADAR].Value.bValue)
+		return;
+
+	UWorld* GWorld = UWorld::GetWorld();
+	if (!UKSystemLib->IsValid(GWorld))
+		return;
+
+	if (!UKSystemLib->IsValid(LocalCharacter))
+		return;
+
+	FVector2D RadarCenter = FVector2D(m_ScreenWidth - Settings[ESP_RADAR_X].Value.fValue, m_ScreenHeight - Settings[ESP_RADAR_Y].Value.fValue);
+	TArray<AReadyOrNotCharacter*> Players = static_cast<AReadyOrNotGameState*>(GWorld->GameState)->AllReadyOrNotCharacters;
+	for (int i = 0; i < Players.Count(); i++)
+	{
+		AReadyOrNotCharacter* Player = Players[i];
+		if (!UKSystemLib->IsValid(Player))
+			continue;
+
+		if (Player->IsDeadNotUnconscious())
+			continue;
+
+		if (Player->IsLocalPlayer())
+			continue;
+
+		bool IsTeammate = Player->IsOnSWATTeam();
+		bool IsCivilian = Player->IsCivilian();
+
+		bool ShowEnemy = !IsTeammate && !IsCivilian && Settings[ESP_ENEMY].Value.bValue;
+		bool ShowFriendly = IsTeammate && !IsCivilian && Settings[ESP_FRIENDLY].Value.bValue;
+		bool ShowCivilian = !IsTeammate && IsCivilian && Settings[ESP_CIVILIAN].Value.bValue;
+
+		if (!(ShowEnemy || ShowFriendly || ShowCivilian))
+			continue;
+
+		if (ShowEnemy)
+		{
+			if (LocalPlayerController->LineOfSightTo(Player, { 0.0f, 0.0f, 0.0f }, false))
+				VEC4CPY(Settings[ESP_VISIBLE_COLOR].Value.v4Value, m_Color);
+			else
+				VEC4CPY(Settings[ESP_ENEMY_COLOR].Value.v4Value, m_Color);
+		}
+		else if (ShowFriendly)
+		{
+			VEC4CPY(Settings[ESP_FRIENDLY_COLOR].Value.v4Value, m_Color);
+		}
+		else if (ShowCivilian)
+		{
+			VEC4CPY(Settings[ESP_CIVILIAN_COLOR].Value.v4Value, m_Color);
+		}
+
+		FVector2D RotatePoint = WorldToRadar(LocalCharacter->GetActorRotation(), LocalCharacter->GetActorLocation(), Player->GetActorLocation(), FVector2D(RadarCenter.X, RadarCenter.Y), 95.0f);
+
+		ImGui::GetForegroundDrawList()->AddLine(ImVec2(RadarCenter.X, RadarCenter.Y), ImVec2(RotatePoint.X, RotatePoint.Y), ImGui::GetColorU32(ImVec4(m_Color.x, m_Color.y, m_Color.z, 0.47f)), 1.0f);
+		ImGui::GetForegroundDrawList()->AddCircleFilled(ImVec2(RotatePoint.X, RotatePoint.Y), 4.0f, ImGui::GetColorU32(m_Color));
+	}
+}
+
 float Game::CalculateHeadCircleRadius(float Distance)
 {
 	const float MinDistance = 0.0f;
@@ -558,42 +622,6 @@ float Game::CalculateHeadCircleRadius(float Distance)
 	}
 }
 
-void Game::RotateTriangle(std::array<FVector, 3>& Points, float Rotation)
-{
-	const auto PointsCenter = (Points.at(0) + Points.at(1) + Points.at(2)) / 3;
-	for (auto& Point : Points)
-	{
-		Point = Point - PointsCenter;
-
-		const auto TempX = Point.X;
-		const auto tempY = Point.Y;
-
-		const auto theta = DEG2RAD(Rotation);
-		const auto c = cosf(theta);
-		const auto s = sinf(theta);
-
-		Point.X = TempX * c - tempY * s;
-		Point.Y = TempX * s + tempY * c;
-
-		Point = Point + PointsCenter;
-	}
-}
-
-void Game::VectorAnglesRadar(FVector& Forward, FVector& Angles)
-{
-	if (Forward.X == 0.f && Forward.Y == 0.f)
-	{
-		Angles.X = Forward.Z > 0.f ? -90.f : 90.f;
-		Angles.Y = 0.f;
-	}
-	else
-	{
-		Angles.X = RAD2DEG(atan2(-Forward.Z, Forward.Magnitude()));
-		Angles.Y = RAD2DEG(atan2(Forward.Y, Forward.X));
-	}
-	Angles.Z = 0.f;
-}
-
 std::string Game::GetTrapType(ETrapType Type)
 {
 	switch (Type)
@@ -609,7 +637,20 @@ std::string Game::GetTrapType(ETrapType Type)
 	}
 }
 
-FVector2D Game::WorldToRadar(FRotator Rotation, FVector Location, FVector EntityLocation, FVector2D RadarPosition, FVector2D RadarSize)
+std::string Game::GetTrapState(ETrapState State)
+{
+	switch (State)
+	{
+	case ETrapState::TS_Live:
+		return std::string(skCrypt("[Live]"));
+	case ETrapState::TS_Activated:
+		return std::string(skCrypt("[Activated]"));
+	case ETrapState::TS_Disabled:
+		return std::string(skCrypt("[Disable]"));
+	}
+}
+
+FVector2D Game::WorldToRadar(FRotator Rotation, FVector Location, FVector EntityLocation, FVector2D RadarCenter, float RadarRadius)
 {
 	FVector2D DotPos;
 	FVector2D Direction;
@@ -620,20 +661,27 @@ FVector2D Game::WorldToRadar(FRotator Rotation, FVector Location, FVector Entity
 
 	// Get Rotation
 	float LocalAngles = Rotation.Yaw;
-
 	float Radian = DEG2RAD(LocalAngles);
 
 	// Calculate Raw DotPos
-	DotPos.X = (Direction.X * (float)cos(Radian) - Direction.Y * (float)sin(Radian)) / 150.0f;
-	DotPos.Y = (Direction.Y * (float)cos(Radian) + Direction.X * (float)sin(Radian)) / 150.0f;
+	DotPos.X = Direction.X * cos(Radian) - Direction.Y * sin(Radian);
+	DotPos.Y = Direction.X * sin(Radian) + Direction.Y * cos(Radian);
 
-	// Add RadarPos To Calculated DotPos
-	DotPos.X = DotPos.X + RadarPosition.X + RadarSize.X / 2.f;
-	DotPos.Y = -DotPos.Y + RadarPosition.Y + RadarSize.Y / 2.f;
+	// Scale DotPos to fit within the radar's radius
+	DotPos.X /= 100.0f;
+	DotPos.Y /= 100.0f;
 
-	// Clamp Dots To RadarSize ( Where 18 = Width/Height of the Dot)
-	DotPos.X = std::clamp(DotPos.X, RadarPosition.X, RadarPosition.X + RadarSize.X - 18);
-	DotPos.Y = std::clamp(DotPos.Y, RadarPosition.Y, RadarPosition.Y + RadarSize.Y - 18);
+	// Adjust DotPos to radar radius
+	float Length = sqrt(DotPos.X * DotPos.X + DotPos.Y * DotPos.Y);
+	if (Length > RadarRadius)
+	{
+		DotPos.X = DotPos.X * RadarRadius / Length;
+		DotPos.Y = DotPos.Y * RadarRadius / Length;
+	}
+
+	// Convert to radar coordinates (with origin at RadarCenter)
+	DotPos.X = DotPos.X + RadarCenter.X;
+	DotPos.Y = -DotPos.Y + RadarCenter.Y;
 
 	return DotPos;
 }
@@ -653,11 +701,6 @@ FVector Game::GetAimWorldLocation(AReadyOrNotCharacter* Player)
 	default:
 		return FVector();
 	}
-}
-
-FVector Game::GetDirectionUnitVector(FVector From, FVector To)
-{
-	return (To - From).GetSafeNormal();
 }
 
 FRotator Game::CalcAngle(FVector Src, FVector Dst, FRotator OldRotation, float Smoothing)
@@ -740,7 +783,7 @@ AReadyOrNotCharacter* Game::GetBestPlayer()
 	return Out;
 }
 
-UGameViewportClient* Game::GetViewport(UWorld* World)
+UGameViewportClient* Game::GetViewportClient(UWorld* World)
 {
 	return World->OwningGameInstance->LocalPlayers[0]->ViewportClient;
 }

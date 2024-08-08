@@ -34,12 +34,12 @@ LRESULT DX11Window::WndProcHook(const HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	}
 
 	if (GetKeyPress(VK_INSERT, false))
-		g_Menu->m_IsShowMenu = !g_Menu->m_IsShowMenu;
+		g_Render->m_IsShowMenu = !g_Render->m_IsShowMenu;
 
 	if (GetKeyPress(VK_HOME, false))
 		g_Console->ToggleConsole();
 
-	if (g_Menu->m_IsShowMenu)
+	if (g_Render->m_IsShowMenu)
 	{
 		ImGui_ImplWin32_WndProcHandler((HWND)g_DX11Window->WndProc, uMsg, wParam, lParam);
 		return true;
@@ -144,13 +144,16 @@ void DX11Window::Overlay(IDXGISwapChain* SwapChain)
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
-	ImGui::GetIO().MouseDrawCursor = g_Menu->m_IsShowMenu;
+	ImGui::GetIO().MouseDrawCursor = g_Render->m_IsShowMenu;
+
+	g_Render->Radar();
+	g_Render->Menu();
 
 	g_Game->Setup();
 	g_Game->Visual();
 	g_Game->Aimbot();
 	g_Game->Misc();
-	g_Menu->Draw();
+	g_Game->Radar();
 
 	ImGui::EndFrame();
 	ImGui::Render();
@@ -174,7 +177,7 @@ void Deallocate()
 
 	g_DX11Window.release();
 	g_Console.release();
-	g_Menu.release();
+	g_Render.release();
 	g_Game.release();
 	g_Hooking.release();
 }

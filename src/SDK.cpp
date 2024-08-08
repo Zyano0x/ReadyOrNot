@@ -139,6 +139,29 @@ float UKismetMathLibrary::Vector_Distance(const FVector& v1, const FVector& v2)
 	return params.ReturnValue;
 }
 
+FVector UKismetMathLibrary::RotatorToVector(const FRotator& InRot)
+{
+	static UFunction* fn = nullptr;
+	if (!fn)
+		fn = UObject::FindObject<UFunction>(std::string(skCrypt("Function /Script/Engine.KismetMathLibrary.Conv_RotatorToVector")));
+
+	class UKismetMathLibrary_Conv_RotatorToVector_Params
+	{
+	public:
+		FRotator                                        InRot;                                                   //  0x0000(0x0018)  (Parm, ZeroConstructor, IsPlainOldData, NoDestructor, NativeAccessSpecifierPublic)
+		FVector                                         ReturnValue;                                             //  0x0018(0x0018)  (Parm, OutParm, ZeroConstructor, ReturnParm, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+	};
+
+	UKismetMathLibrary_Conv_RotatorToVector_Params params{};
+	params.InRot = InRot;
+
+	auto flags = fn->FunctionFlags;
+	UObject::ProcessEvent(fn, &params);
+	fn->FunctionFlags = flags;
+
+	return params.ReturnValue;
+}
+
 FRotator UKismetMathLibrary::FindLookAtRotation(const FVector& Start, const FVector& Target)
 {
 	static UFunction* fn = nullptr;
@@ -179,6 +202,19 @@ int32_t ULevel::GetMaxPacket()
 
 	return Memory::Read<int32_t>(reinterpret_cast<uintptr_t>(this) + 0xA0);
 }
+
+ULocalPlayer* UGameInstance::GetLocalPlayers()
+{
+	if (!this)
+		return nullptr;
+
+	uintptr_t LocalPlayerArray = *reinterpret_cast<uintptr_t*>(reinterpret_cast<uint64_t>(this) + 0x38);
+	if (!LocalPlayerArray)
+		return nullptr;
+
+	return *reinterpret_cast<ULocalPlayer**>(LocalPlayerArray);
+}
+
 
 void APlayerCharacter::EquipZipcuffs()
 {

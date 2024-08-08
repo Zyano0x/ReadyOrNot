@@ -52,6 +52,9 @@ void BotInitSettings()
 	Settings[ESP_EVIDENCE_COLOR] = BotAddConfig("Esp Settings", "Esp_EvidenceColor", ImVec4(1.00f, 1.00f, 1.00f, 1.00f));
 	Settings[ESP_TRAP] = BotAddConfig("Esp Settings", "Esp_Trap", false);
 	Settings[ESP_TRAP_COLOR] = BotAddConfig("Esp Settings", "Esp_TrapColor", ImVec4(1.00f, 1.00f, 1.00f, 1.00f));
+	Settings[ESP_RADAR] = BotAddConfig("Esp Settings", "Esp_Radar", false);
+	Settings[ESP_RADAR_X] = BotAddConfig("Esp Settings", "Esp_RadarX", 250.0f, 120.0f, 1500.0f);
+	Settings[ESP_RADAR_Y] = BotAddConfig("Esp Settings", "Esp_RadarY", 250.0f, 120.0f, 1500.0f);
 
 	//========================================================================	
 

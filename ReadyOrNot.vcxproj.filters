@@ -42,7 +42,7 @@
     <ClInclude Include="include\Memory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\Menu.h">
+    <ClInclude Include="include\Render.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\Obfuscate.h">
@@ -86,7 +86,7 @@
     <ClCompile Include="src\Memory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Menu.cpp">
+    <ClCompile Include="src\Render.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="libs\ImGui\imgui_draw.cpp">
