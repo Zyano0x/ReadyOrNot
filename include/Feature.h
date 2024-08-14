@@ -13,20 +13,19 @@ public:
 	void Hook();
 	void UnHook();
 
-	void Setup();
+	bool Check();
 	void Visual();
 	void Aimbot();
 	void Misc();
 	void Radar();
 
-	float CalculateHeadCircleRadius(float Distance);
+	float CalcHeadCircleRadius(float Distance);
 	std::string GetTrapType(ETrapType Type);
 	std::string GetTrapState(ETrapState State);
 	FVector2D WorldToRadar(FRotator Rotation, FVector Location, FVector EntityLocation, FVector2D RadarCenter, float RadarRadius);
 	FVector GetAimWorldLocation(AReadyOrNotCharacter* Player);
 	FRotator CalcAngle(FVector Src, FVector Dst, FRotator OldRotation, float Smoothing);
 	AReadyOrNotCharacter* GetBestPlayer();
-	UGameViewportClient* GetViewportClient(UWorld* World);
 
 	int m_ScreenWidth = 0;
 	int m_ScreenHeight = 0;

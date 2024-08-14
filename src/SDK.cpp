@@ -632,6 +632,30 @@ void AReadyOrNotCharacter::Server_CollectEvidenceActor(AEvidenceActor* InEvidenc
 	fn->FunctionFlags = flags;
 }
 
+void AReadyOrNotCharacter::Server_ReportToTOC(AActor* Actor, bool bPlayAnimation, bool bTocResponse)
+{
+	static UFunction* fn = nullptr;
+	if (!fn)
+		fn = UObject::FindObject<UFunction>(std::string(skCrypt("Function /Script/ReadyOrNot.ReadyOrNotCharacter.Server_ReportToTOC")));
+
+	class AReadyOrNotCharacter_Server_ReportToTOC_Params
+	{
+	public:
+		AActor* Actor;                                                   //  0x0000(0x0008)  (Parm, ZeroConstructor, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+		bool bPlayAnimation;                                          //  0x0008(0x0001)  (Parm, ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+		bool bTocResponse;                                            //  0x0009(0x0001)  (Parm, ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+	};
+
+	AReadyOrNotCharacter_Server_ReportToTOC_Params params{};
+	params.Actor = Actor;
+	params.bPlayAnimation = bPlayAnimation;
+	params.bTocResponse = bTocResponse;
+
+	auto flags = fn->FunctionFlags;
+	UObject::ProcessEvent(fn, &params);
+	fn->FunctionFlags = flags;
+}
+
 bool APlayerController::IsInputKeyDown(const FKey& Key)
 {
 	static UFunction* fn = nullptr;
@@ -1251,8 +1275,7 @@ void UCharacterMovementComponent::SetMovementMode(EMovementMode NewMovementMode,
 
 FVector USkeletalMeshComponent::GetBoneWorldPos(const int32_t& boneId)
 {
-	if (GET_BONE_MATRIX_OFFSET > 0x00)
-	{
+	if (GET_BONE_MATRIX_OFFSET > 0x00) {
 		typedef void(*GetBoneMatrixType)(const USkinnedMeshComponent*, FMatrix&, int);
 		static GetBoneMatrixType GetBoneMatrixPtr = nullptr;
 		if (!GetBoneMatrixPtr)

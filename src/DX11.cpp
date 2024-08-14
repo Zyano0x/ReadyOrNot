@@ -6,8 +6,7 @@ DX11Window::~DX11Window() {}
 
 LRESULT DX11Window::WndProcHook(const HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	switch (uMsg)
-	{
+	switch (uMsg) {
 	case WM_LBUTTONDOWN:
 		VirtualKeys[VK_LBUTTON].bKey = true;
 		break;
@@ -39,8 +38,7 @@ LRESULT DX11Window::WndProcHook(const HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	if (GetKeyPress(VK_HOME, false))
 		g_Console->ToggleConsole();
 
-	if (g_Render->m_IsShowMenu)
-	{
+	if (g_Render->m_IsShowMenu) {
 		ImGui_ImplWin32_WndProcHandler((HWND)g_DX11Window->WndProc, uMsg, wParam, lParam);
 		return true;
 	}
@@ -64,14 +62,12 @@ HRESULT DX11Window::ResizeHook(IDXGISwapChain* SwapChain, UINT BufferCount, UINT
 
 	ID3D11Texture2D* BackBuffer;
 	SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D*), (LPVOID*)&BackBuffer);
-	if (BackBuffer)
-	{
+	if (BackBuffer) {
 		g_DX11Window->Device->CreateRenderTargetView(BackBuffer, 0, &g_DX11Window->RenderTargetView);
 		BackBuffer->Release();
 	}
 
-	if (g_DX11Window->InitImGui)
-	{
+	if (g_DX11Window->InitImGui) {
 		ImGuiIO& io = ImGui::GetIO();
 		io.DisplaySize = ImVec2(static_cast<float>(Width), static_cast<float>(Height));
 	}
@@ -102,10 +98,8 @@ void DX11Window::UnhookD3D()
 
 void DX11Window::Overlay(IDXGISwapChain* SwapChain)
 {
-	if (!InitImGui)
-	{
-		if (SUCCEEDED(SwapChain->GetDevice(__uuidof(ID3D11Device), (void**)&Device)))
-		{
+	if (!InitImGui) {
+		if (SUCCEEDED(SwapChain->GetDevice(__uuidof(ID3D11Device), (void**)&Device))) {
 			Device->GetImmediateContext(&DeviceContext);
 			DXGI_SWAP_CHAIN_DESC SwapChainDesc;
 			SwapChain->GetDesc(&SwapChainDesc);
@@ -131,7 +125,7 @@ void DX11Window::Overlay(IDXGISwapChain* SwapChain)
 			ImGui_ImplDX11_Init(Device, DeviceContext);
 			ImGui_ImplDX11_CreateDeviceObjects();
 
-			if (strcpy_s(szDllDirectory, sizeof(szDllDirectory), "C:\\RC\\") == 0)
+			if (strcpy_s(szDllDirectory, sizeof(szDllDirectory), skCrypt("C:\\RC\\")) == 0)
 				CreateDirectoryA(szDllDirectory, NULL);
 
 			BotInitSettings();
@@ -149,7 +143,6 @@ void DX11Window::Overlay(IDXGISwapChain* SwapChain)
 	g_Render->Radar();
 	g_Render->Menu();
 
-	g_Game->Setup();
 	g_Game->Visual();
 	g_Game->Aimbot();
 	g_Game->Misc();

@@ -354,7 +354,9 @@ public:
 class AActor : public UObject
 {
 public:
-	PAD(0x270);
+	PAD(0x118);
+	AActor* Owner; // 0x0140
+	PAD(0x150);
 
 public:
 	void GetActorBounds(bool bOnlyCollidingComponents, struct FVector* Origin, struct FVector* BoxExtent, bool bIncludeFromChildActors);
@@ -589,6 +591,7 @@ public:
 	void Server_ReportTarget(class AActor* Character);
 	void Server_CollectEvidence(class ABaseItem* Item);
 	void Server_CollectEvidenceActor(AEvidenceActor* InEvidenceActor);
+	void Server_ReportToTOC(AActor* Actor, bool bPlayAnimation, bool bTocResponse);
 };
 
 class APlayerCharacter : public AReadyOrNotCharacter
